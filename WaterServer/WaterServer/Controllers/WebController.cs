@@ -3,7 +3,7 @@
 namespace WaterServer.Controllers;
 
 [ApiController]
-public class DummyController : ControllerBase
+public class WebController : ControllerBase
 {
     [HttpGet("/")]
     public string Hello()

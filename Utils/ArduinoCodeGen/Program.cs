@@ -10,7 +10,7 @@ internal class Program
 {
     const string ARDUINO_FOLDER = "D:\\Bn\\Src\\Water\\Arduino\\water2";
     const string SECRETS_FOLDER = "D:\\Bn\\Src\\Water_Secrets";
-    const string CERT_FILENAME = "myCert202406.crt";
+    const string CERT_FILENAME = "myCert202505.crt";
 
     static void Main(string[] args)
     {
