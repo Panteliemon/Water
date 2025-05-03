@@ -6,7 +6,9 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using WaterServer.DataAccess;
 
 namespace WaterServer;
 
@@ -35,10 +37,19 @@ public class Program
             });
         }
 
+        AddServices(builder.Services);
+        DataAccessServices.AddServices(builder.Services);
+
         WebApplication app = builder.Build();
 
-        app.MapGet("/", () => "Hello World! 111");
+        app.MapControllers();
 
         app.Run();
+    }
+
+    private static void AddServices(IServiceCollection services)
+    {
+        services.AddControllers();
+        services.AddSingleton<IWaterConfig, WaterConfig>();
     }
 }
