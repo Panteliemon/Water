@@ -5,6 +5,7 @@ using WaterServer.Utils;
 namespace WaterServer.Controllers;
 
 [ApiController]
+[NoChunkingPlease]
 public class OperationController : ControllerBase
 {
     [HttpPost("/operation/test")]

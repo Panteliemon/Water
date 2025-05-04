@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WaterServer.DataAccess;
+using WaterServer.Utils;
 
 namespace WaterServer;
 
@@ -43,6 +44,7 @@ public class Program
         WebApplication app = builder.Build();
 
         app.MapControllers();
+        app.IntegrateMegaDechunker();
 
         app.Run();
     }
