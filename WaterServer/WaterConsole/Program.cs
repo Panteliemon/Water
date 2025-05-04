@@ -4,6 +4,11 @@ namespace WaterConsole;
 
 internal class Program
 {
+    const ConsoleColor USERINPUT = ConsoleColor.Gray;
+    const ConsoleColor INFO = ConsoleColor.Cyan;
+    const ConsoleColor WARNING = ConsoleColor.Yellow;
+    const ConsoleColor ERROR = ConsoleColor.Red;
+
     static void Main(string[] args)
     {
         try
@@ -12,7 +17,7 @@ internal class Program
 
             while (true)
             {
-                InColor(ConsoleColor.Cyan, () => Console.Write("> "));
+                InColor(INFO, () => Console.Write("> "));
 
                 string commandRaw = Console.ReadLine();
                 InputCommand cmd = StringUtils.ParseCommand(commandRaw);
@@ -31,10 +36,12 @@ internal class Program
                 }
                 else
                 {
-                    InColor(ConsoleColor.Yellow, () =>
+                    InColor(WARNING, () =>
                     {
                         Console.WriteLine($"Unknown command: {cmd.NameLower.ToUpper()}");
-                        InColor(ConsoleColor.Gray, () => Console.Write("h, help"));
+                        InColor(USERINPUT, () => Console.Write("h"));
+                        Console.Write(", ");
+                        InColor(USERINPUT, () => Console.Write("help"));
                         Console.WriteLine(" for the list of supported commands.");
                     });
                 }
@@ -42,10 +49,10 @@ internal class Program
         }
         catch (Exception ex)
         {
-            InColor(ConsoleColor.Red, () =>
+            InColor(ERROR, () =>
             {
                 Console.WriteLine($"[x] Unhandled exception: {ex.Message}");
-                InColor(ConsoleColor.Yellow, () =>
+                InColor(WARNING, () =>
                 {
                     Console.WriteLine(ex.StackTrace);
                 });
@@ -56,20 +63,24 @@ internal class Program
 
     static void PrintHello()
     {
-        InColor(ConsoleColor.Cyan, () =>
+        InColor(INFO, () =>
         {
             Console.WriteLine("=-=-=-=-=-=-=-=-=-=-=-=-=-=");
             Console.WriteLine("Waterer 2.0 Control Console");
             Console.WriteLine("=-=-=-=-=-=-=-=-=-=-=-=-=-=");
             Console.WriteLine();
             Console.WriteLine("Quick start: ");
-            InColor(ConsoleColor.Gray, () => Console.Write("  tl"));
+            InColor(USERINPUT, () => Console.Write("  tl"));
             Console.WriteLine(" - view list of tasks");
-            InColor(ConsoleColor.Gray, () => Console.Write("  nt"));
+            InColor(USERINPUT, () => Console.Write("  nt"));
             Console.WriteLine(" - add new task");
-            InColor(ConsoleColor.Gray, () => Console.Write("  h, help"));
+            InColor(USERINPUT, () => Console.Write("  h"));
+            Console.Write(", ");
+            InColor(USERINPUT, () => Console.Write("help"));
             Console.WriteLine(" - get help");
-            InColor(ConsoleColor.Gray, () => Console.Write("  q, exit"));
+            InColor(USERINPUT, () => Console.Write("  q"));
+            Console.Write(", ");
+            InColor(USERINPUT, () => Console.Write("exit"));
             Console.WriteLine(" - exit");
             Console.WriteLine();
         });
@@ -77,7 +88,7 @@ internal class Program
 
     static void PrintHelp()
     {
-        InColor(ConsoleColor.Cyan, () =>
+        InColor(INFO, () =>
         {
             Console.WriteLine("TODO...");
         });
