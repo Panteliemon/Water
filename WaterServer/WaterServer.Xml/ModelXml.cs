@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Serialization;
 using WaterServer.ModelSimple;
 using WaterServer.Xml.Dto;
@@ -15,38 +16,35 @@ public static class ModelXml
     private static object lockObj = new();
     private static XmlSerializer rootSerializer;
     private static XmlSerializer taskSerializer;
-
-    public static void WriteRoot(SModel model, TextWriter tw)
-    {
-        ArgumentNullException.ThrowIfNull(model);
-        InitRootSerializer();
-
-        RootDto dto = ModelToDto(model);
-        rootSerializer.Serialize(tw, dto);
-    }
-
-    public static SModel ReadRoot(TextReader tr)
-    {
-        InitRootSerializer();
-
-        RootDto dto = (RootDto)rootSerializer.Deserialize(tr);
-        return DtoToModel(dto);
-    }
+    private static XmlSerializer plantSerializer;
+    private static XmlSerializerNamespaces xmlNamespaces;
+    private static XmlWriterSettings xmlWriterSettings;
 
     public static string RootToStr(SModel model)
     {
         if (model == null)
             return null;
 
-        StringWriter sw = new();
-        WriteRoot(model, sw);
-        return sw.ToString();
+        InitRootSerializer();
+        
+        RootDto dto = ModelToDto(model);
+        StringBuilder sb = new();
+        using (XmlWriter writer = XmlWriter.Create(sb, xmlWriterSettings))
+        {
+            rootSerializer.Serialize(writer, dto, xmlNamespaces);
+        }
+        return sb.ToString();
     }
 
     public static SModel ParseRoot(string str)
     {
-        StringReader sr = new(str);
-        return ReadRoot(sr);
+        InitRootSerializer();
+
+        using (TextReader reader = new StringReader(str))
+        {
+            RootDto dto = (RootDto)rootSerializer.Deserialize(reader);
+            return DtoToModel(dto);
+        }
     }
 
     public static string TaskToStr(STask task)
@@ -56,20 +54,53 @@ public static class ModelXml
 
         InitTaskSerializer();
 
-        StringWriter sw = new();
         TaskDto dto = TaskToDto(task);
-        taskSerializer.Serialize(sw, dto);
+        StringBuilder sb = new();
+        using (XmlWriter writer = XmlWriter.Create(sb, xmlWriterSettings))
+        {
+            taskSerializer.Serialize(writer, dto, xmlNamespaces);
+        }
 
-        return sw.ToString();
+        return sb.ToString();
     }
 
     public static STask ParseTask(string str, Func<int, SPlant> plantByIndexFinder)
     {
         InitTaskSerializer();
 
-        StringReader sr = new(str);
-        TaskDto dto = (TaskDto)taskSerializer.Deserialize(sr);
-        return DtoToTask(dto, plantByIndexFinder);
+        using (TextReader reader = new StringReader(str))
+        {
+            TaskDto dto = (TaskDto)taskSerializer.Deserialize(reader);
+            return DtoToTask(dto, plantByIndexFinder);
+        }
+    }
+
+    public static string PlantToStr(SPlant plant)
+    {
+        if (plant == null)
+            return null;
+
+        InitPlantSerializer();
+
+        PlantDto dto = PlantToDto(plant);
+        StringBuilder sb = new();
+        using (XmlWriter writer = XmlWriter.Create(sb, xmlWriterSettings))
+        {
+            plantSerializer.Serialize(writer, dto, xmlNamespaces);
+        }
+
+        return sb.ToString();
+    }
+
+    public static SPlant ParsePlant(string str)
+    {
+        InitPlantSerializer();
+
+        using (TextReader reader = new StringReader(str))
+        {
+            PlantDto dto = (PlantDto)plantSerializer.Deserialize(reader);
+            return DtoToPlant(dto);
+        }
     }
 
     #region Entity to Dto
@@ -265,6 +296,7 @@ public static class ModelXml
         {
             if (rootSerializer == null)
                 rootSerializer = new XmlSerializer(typeof(RootDto));
+            InitXmlSettings();
         }
     }
 
@@ -274,6 +306,34 @@ public static class ModelXml
         {
             if (taskSerializer == null)
                 taskSerializer = new XmlSerializer(typeof(TaskDto));
+            InitXmlSettings();
+        }
+    }
+
+    private static void InitPlantSerializer()
+    {
+        lock (lockObj)
+        {
+            if (plantSerializer == null)
+                plantSerializer = new XmlSerializer(typeof(PlantDto));
+            InitXmlSettings();
+        }
+    }
+
+    private static void InitXmlSettings()
+    {
+        if (xmlNamespaces == null)
+        {
+            xmlNamespaces = new XmlSerializerNamespaces();
+            xmlNamespaces.Add(string.Empty, string.Empty);
+        }
+        if (xmlWriterSettings == null)
+        {
+            xmlWriterSettings = new XmlWriterSettings()
+            {
+                Indent = true,
+                OmitXmlDeclaration = true
+            };
         }
     }
 }

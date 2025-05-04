@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WaterServer.Model;
 using WaterServer.ModelSimple;
 using WaterServer.Xml;
 
@@ -46,11 +45,8 @@ internal class SimpleFileBasedRepository : IRepository
             if (!File.Exists(storageFilePath))
                 return;
 
-            using (StreamReader sr = new StreamReader(
-                new FileStream(storageFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 262144)))
-            {
-                result = ModelXml.ReadRoot(sr);
-            }
+            string modelXml = File.ReadAllText(storageFilePath, Encoding.UTF8);
+            result = ModelXml.ParseRoot(modelXml);
 
             cacheValidUntil = DateTime.Now.Add(cacheLifeTime);
             cachedModel = result?.Clone();
@@ -68,11 +64,8 @@ internal class SimpleFileBasedRepository : IRepository
             cacheValidUntil = DateTime.Now.Add(cacheLifeTime);
             cachedModel = model.Clone();
 
-            using (StreamWriter sw = new StreamWriter(
-                new FileStream(storageFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 262144)))
-            {
-                ModelXml.WriteRoot(model, sw);
-            }
+            string modelXml = ModelXml.RootToStr(model);
+            File.WriteAllText(storageFilePath, modelXml, Encoding.UTF8);
         }));
     }
 

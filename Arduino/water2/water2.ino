@@ -8,7 +8,7 @@ const char *ssid = WIFI_SSID;
 const char *pass = WIFI_PASS;
 
 int status = WL_IDLE_STATUS;
-const char *serverDomain = "ec2-3-78-70-168.eu-central-1.compute.amazonaws.com";
+const char *serverDomain = "ec2-63-176-210-31.eu-central-1.compute.amazonaws.com";
 
 WiFiSSLClient netClient;
 
@@ -42,10 +42,24 @@ void sendRequest() {
   if (netClient.connect(serverDomain, 443)) {
     Serial.println("Sending HTTP request...");
 
-    netClient.println("GET / HTTP/1.1");
-    netClient.println("Host: ec2-3-78-70-168.eu-central-1.compute.amazonaws.com");
+    // // Example of GET:
+    // netClient.println("GET / HTTP/1.1");
+    // netClient.println("Host: ec2-3-78-70-168.eu-central-1.compute.amazonaws.com");
+    // netClient.println("Connection: close");
+    // //netClient.println("My Custom Header: bla-bla-bla"); just checked that server rejects
+    // netClient.println();
+
+    // POST:
+    netClient.println("POST /operation/test HTTP/1.1");
+    netClient.println("Accept: */*");
     netClient.println("Connection: close");
-    //netClient.println("My Custom Header: bla-bla-bla"); just checked that server rejects
+    netClient.println("Host: ec2-63-176-210-31.eu-central-1.compute.amazonaws.com");
+    netClient.println("Cache-Control: no-cache");
+    netClient.println("Content-Type: text/plain");
+    netClient.println("Content-Length: 15");
+    
+    netClient.println();
+    netClient.println("Hi From Arduino");
     netClient.println();
   }
 }
