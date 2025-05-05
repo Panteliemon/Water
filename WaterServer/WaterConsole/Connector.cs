@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -13,7 +14,9 @@ namespace WaterConsole;
 internal class Connector
 {
     private string serverDomain;
-    private HttpClient httpClient;
+    private HttpClient httpClientPublic;
+    private HttpClient httpClientPrivate;
+    private string apiKey;
 
     public Connector(IConfiguration configuration)
     {
@@ -26,15 +29,22 @@ internal class Connector
             serverDomain = configuration["WaterServerDomain:Release"];
         }
 
-        httpClient = new HttpClient()
+        httpClientPublic = new HttpClient()
         {
             BaseAddress = new Uri($"https://{serverDomain}"),
         };
+
+        apiKey = File.ReadAllText(Path.Combine(configuration["SecretsPath"], "apikey-console.txt"));
+        httpClientPrivate = new HttpClient()
+        {
+            BaseAddress = new Uri($"https://{serverDomain}"),
+        };
+        httpClientPrivate.DefaultRequestHeaders.Add("Water2-ApiKey", apiKey);
     }
 
     public SModel Pull()
     {
-        Task<string> task = httpClient.GetStringAsync("/xml");
+        Task<string> task = httpClientPublic.GetStringAsync("/xml");
         string str = task.Result;
         return ModelXml.ParseRoot(str);
     }
@@ -42,20 +52,20 @@ internal class Connector
     public void AddPlant(SPlant plant)
     {
         string xml = ModelXml.PlantToStr(plant);
-        Task<HttpResponseMessage> responseTask = httpClient.PostAsync("/setup/plants", new StringContent(xml));
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.PostAsync("/setup/plants", new StringContent(xml));
         ServerException.ThrowIfError(responseTask.Result);
     }
 
     public void UpdatePlant(SPlant plant)
     {
         string xml = ModelXml.PlantToStr(plant);
-        Task<HttpResponseMessage> responseTask = httpClient.PutAsync("/setup/plants", new StringContent(xml));
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.PutAsync("/setup/plants", new StringContent(xml));
         ServerException.ThrowIfError(responseTask.Result);
     }
 
     public void DeletePlant(int plantIndex)
     {
-        Task<HttpResponseMessage> responseTask = httpClient.DeleteAsync($"/setup/plants/{plantIndex}");
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.DeleteAsync($"/setup/plants/{plantIndex}");
         ServerException.ThrowIfError(responseTask.Result);
     }
 }

@@ -8,6 +8,7 @@ using WaterServer.Xml;
 namespace WaterServer.Controllers;
 
 [ApiController]
+[AuthorizeSimple(Role = "editor")]
 public class SetupController : ControllerBase
 {
     private IRepository repository;

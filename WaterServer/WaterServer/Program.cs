@@ -43,8 +43,12 @@ public class Program
         DataAccessServices.AddServices(builder.Services);
 
         WebApplication app = builder.Build();
+        // To load parameters and display possible warnings immediately
+        app.Services.GetRequiredService<IWaterConfig>();
 
+        app.AddCustomAuthenticator();
         app.MapControllers();
+        app.AddSimpleAuthorizator();
         app.IntegrateMegaDechunker();
 
         app.Run();
