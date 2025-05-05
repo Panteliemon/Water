@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WaterServer.DataAccess;
+using WaterServer.Services;
 using WaterServer.Utils;
 
 namespace WaterServer;
@@ -53,5 +54,6 @@ public class Program
     {
         services.AddControllers();
         services.AddSingleton<IWaterConfig, WaterConfig>();
+        services.AddSingleton<ICriticalSection, CriticalSection>();
     }
 }

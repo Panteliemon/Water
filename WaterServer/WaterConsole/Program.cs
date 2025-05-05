@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using WaterServer.ModelSimple;
 
 namespace WaterConsole;
 
@@ -8,6 +13,10 @@ internal class Program
     const ConsoleColor INFO = ConsoleColor.Cyan;
     const ConsoleColor WARNING = ConsoleColor.Yellow;
     const ConsoleColor ERROR = ConsoleColor.Red;
+    const ConsoleColor REQUEST = ConsoleColor.Green;
+
+    static Connector connector;
+    static SModel model;
 
     static void Main(string[] args)
     {
@@ -15,6 +24,21 @@ internal class Program
         {
             PrintHello();
 
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    ["Debug"] =
+#if DEBUG
+                    "1"
+#else
+                    "0"
+#endif
+                })
+                .AddJsonFile("config.json")
+                .Build();
+            connector = new Connector(configuration);
+
+            // Main cycle
             while (true)
             {
                 InColor(INFO, () => Console.Write("> "));
@@ -34,14 +58,78 @@ internal class Program
                 {
                     Console.Clear();
                 }
+                else if ((cmd.NameLower == "add") || (cmd.NameLower == "new"))
+                {
+                    CompoundCmdWrapper(cmd.Parameters, new string[] { "plant", "task" }, parameterLower =>
+                    {
+                        if (parameterLower == "plant")
+                        {
+                            ExecuteAddPlant();
+                        }
+                        else if (parameterLower == "task")
+                        {
+
+                        }
+                    });
+                }
+                else if ((cmd.NameLower == "edit") || (cmd.NameLower == "update"))
+                {
+                    CompoundCmdWrapper(cmd.Parameters, new string[] { "plant", "task" }, parameterLower =>
+                    {
+                        if (parameterLower == "plant")
+                        {
+
+                        }
+                        else if (parameterLower == "task")
+                        {
+
+                        }
+                    });
+                }
+                else if (cmd.NameLower == "delete")
+                {
+                    CompoundCmdWrapper(cmd.Parameters, new string[] { "plant", "task" }, parameterLower =>
+                    {
+                        if (parameterLower == "plant")
+                        {
+
+                        }
+                        else if (parameterLower == "task")
+                        {
+
+                        }
+                    });
+                }
+                else if ((cmd.NameLower == "pull") || (cmd.NameLower == "reload"))
+                {
+                    ExecutePull();
+                }
+                else if ((cmd.NameLower == "pl") || (cmd.NameLower == "plants"))
+                {
+
+                }
+                else if ((cmd.NameLower == "tl") || (cmd.NameLower == "tasks"))
+                {
+
+                }
+                else if (cmd.NameLower == "status")
+                {
+
+                }
+                else if (cmd.NameLower == "nt")
+                {
+
+                }
+                else if (cmd.NameLower == "fail")
+                {
+                    throw new Exception("NOOOOOOOOO!!!");
+                }
                 else
                 {
                     InColor(WARNING, () =>
                     {
                         Console.WriteLine($"Unknown command: {cmd.NameLower.ToUpper()}");
-                        InColor(USERINPUT, () => Console.Write("h"));
-                        Console.Write(", ");
-                        InColor(USERINPUT, () => Console.Write("help"));
+                        PrintCommaSeparated(new[] { "h", "help" }, ", ", USERINPUT);
                         Console.WriteLine(" for the list of supported commands.");
                     });
                 }
@@ -52,10 +140,7 @@ internal class Program
             InColor(ERROR, () =>
             {
                 Console.WriteLine($"[x] Unhandled exception: {ex.Message}");
-                InColor(WARNING, () =>
-                {
-                    Console.WriteLine(ex.StackTrace);
-                });
+                InColorLn(WARNING, ex.StackTrace);
                 Console.WriteLine("App terminated");
             });
         }
@@ -74,13 +159,9 @@ internal class Program
             Console.WriteLine(" - view list of tasks");
             InColor(USERINPUT, () => Console.Write("  nt"));
             Console.WriteLine(" - add new task");
-            InColor(USERINPUT, () => Console.Write("  h"));
-            Console.Write(", ");
-            InColor(USERINPUT, () => Console.Write("help"));
+            PrintCommaSeparated(new[] { "  h", "help" }, " or ", USERINPUT);
             Console.WriteLine(" - get help");
-            InColor(USERINPUT, () => Console.Write("  q"));
-            Console.Write(", ");
-            InColor(USERINPUT, () => Console.Write("exit"));
+            PrintCommaSeparated(new[] { "  q", "exit" }, " or ", USERINPUT);
             Console.WriteLine(" - exit");
             Console.WriteLine();
         });
@@ -93,6 +174,299 @@ internal class Program
             Console.WriteLine("TODO...");
         });
     }
+
+    #region Commands
+
+    static bool ExecutePull()
+    {
+        return NetworkingWrapper("Fetching data from server...", () =>
+        {
+            SModel newModel = connector.Pull();
+            model = newModel;
+        });
+    }
+
+    static void ExecuteAddPlant()
+    {
+        if (!AutoPull())
+            return;
+
+        if (model.Plants.Count >= 8)
+        {
+            InColorLn(WARNING, "Plant list full! Cannot add more plants");
+            return;
+        }
+
+        bool[] isIndexOccupied = new bool[SPlant.MAX_COUNT];
+        foreach (SPlant plant in model.Plants)
+        {
+            if ((plant.Index >= 0) && (plant.Index < isIndexOccupied.Length))
+                isIndexOccupied[plant.Index] = true;
+        }
+        List<int> availableIndicies = new();
+        for (int i = 0; i < isIndexOccupied.Length; i++)
+        {
+            if (!isIndexOccupied[i])
+                availableIndicies.Add(i);
+        }
+
+        int plantIndex = -1;
+        if (availableIndicies.Count == 1)
+        {
+            plantIndex = availableIndicies[0];
+            InColorLn(INFO, $"Valve Number is automatically set to {plantIndex + 1} as the only available option.");
+        }
+        else
+        {
+            plantIndex = QueryInt("Enter plant's Valve Number", availableIndicies.Select(x => x + 1)) - 1;
+        }
+
+        SPlantType plantType = QueryEnum("Enter plant's Type:",
+            Enum.GetValues<SPlantType>().Where(x => x != SPlantType.Unused));
+
+        InColorLn(INFO, $"Valve Number: {plantIndex + 1}");
+        InColorLn(INFO, $"Type: {plantType}");
+
+        bool save = AskYesNo("Save to server?");
+        if (save)
+        {
+            SPlant plant = new()
+            {
+                Index = plantIndex,
+                PlantType = plantType
+            };
+
+            if (NetworkingWrapper("Sending data...", () =>
+                {
+                    connector.AddPlant(plant);
+                }))
+            {
+                ExecutePull();
+            }
+            else
+            {
+                InColorLn(ERROR, "Add plant aborted");
+            }
+        }
+        else
+        {
+            InColorLn(INFO, "Add plant aborted");
+        }
+    }
+
+    #endregion
+
+    #region Input "Dialogs"
+
+    static int QueryInt(string prompt, IEnumerable<int> options)
+    {
+        while (true)
+        {
+            InColor(REQUEST, () =>
+            {
+                Console.Write(prompt);
+                Console.Write(" (");
+                PrintCommaSeparated(options.Select(x => x.ToString()).ToArray(), ", ", USERINPUT);
+                Console.WriteLine("):");
+                Console.Write("> ");
+            });
+
+            string str = Console.ReadLine().Trim();
+            if (int.TryParse(str, out int parsed))
+            {
+                if (options.Contains(parsed))
+                {
+                    return parsed;
+                }
+                else
+                {
+                    InColorLn(WARNING, "Please only use suggested values");
+                }
+            }
+            else
+            {
+                InColorLn(WARNING, "Please only use suggested integer numbers");
+            }
+        }
+    }
+
+    static T QueryEnum<T>(string prompt, IEnumerable<T> options)
+        where T: struct
+    {
+        if (!typeof(T).IsSubclassOf(typeof(Enum)))
+            throw new InvalidOperationException();
+        if (!options.Any())
+            throw new InvalidOperationException();
+
+        InColorLn(REQUEST, prompt);
+
+        while (true)
+        {
+            InColor(REQUEST, () =>
+            {
+                Console.WriteLine("Options:");
+                foreach (T option in options)
+                {
+                    Console.Write("  ");
+                    InColor(USERINPUT, Enum.Format(typeof(T), option, "d"));
+                    Console.Write(" / ");
+                    InColorLn(USERINPUT, Enum.GetName(typeof(T), option));
+                }
+
+                Console.Write("> ");
+            });
+
+            string str = Console.ReadLine().Trim();
+            if (int.TryParse(str, out int parsed))
+            {
+                if (Enum.IsDefined(typeof(T), parsed))
+                {
+                    return (T)Enum.ToObject(typeof(T), parsed);
+                }
+                else
+                {
+                    InColorLn(WARNING, "Please only use suggested integer or text values");
+                }
+            }
+            else
+            {
+                List<T> matchedExactly = new();
+                List<T> matchedInDifferentCase = new();
+                string strLower = str.ToLower();
+                foreach (T option in options)
+                {
+                    if (Enum.GetName(typeof(T), option).ToLower() == strLower)
+                    {
+                        matchedInDifferentCase.Add(option);
+                        if (Enum.GetName(typeof(T), option) == str)
+                        {
+                            matchedExactly.Add(option);
+                        }
+                    }
+                }
+
+                if (matchedExactly.Count == 1)
+                {
+                    return matchedExactly[0];
+                }
+                else if (matchedInDifferentCase.Count == 1)
+                {
+                    return matchedInDifferentCase[0];
+                }
+                else if (matchedInDifferentCase.Count > 1)
+                {
+                    InColorLn(WARNING, "Please use exact lowercase/uppercase spelling because several values match your input.");
+                }
+                else
+                {
+                    InColorLn(WARNING, "Please only use suggested integer or text values");
+                }
+            }
+        }
+    }
+
+    static bool AskYesNo(string question, ConsoleColor color = REQUEST)
+    {
+        while (true)
+        {
+            InColor(color, () =>
+            {
+                Console.Write(question);
+                Console.Write(" (");
+                InColor(USERINPUT, "y");
+                Console.Write("/");
+                InColor(USERINPUT, "N");
+                Console.Write("): ");
+            });
+
+            string answer = Console.ReadLine().Trim();
+            string answerLower = answer.ToLower();
+            if (answerLower == "y")
+            {
+                return true;
+            }
+            else if (answerLower == "n")
+            {
+                return false;
+            }
+            else
+            {
+                InColorLn(WARNING, "Please only use Y or N");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Helpers for Commands
+
+    static bool AutoPull()
+    {
+        if (model == null)
+        {
+            if (!ExecutePull())
+            {
+                InColorLn(ERROR, "Command execution aborted due to failed contact with server.");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    static void CompoundCmdWrapper(IReadOnlyList<string> parameters,
+        string[] supportedParametersLower, Action<string> action)
+    {
+        if (parameters.Count > 0)
+        {
+            string parameterLower = parameters[0].ToLower();
+            if (supportedParametersLower.Contains(parameterLower))
+            {
+                action(parameterLower);
+            }
+            else
+            {
+                InColor(WARNING, () =>
+                {
+                    Console.WriteLine($"Unknown command parameter: {parameters[0]}");
+                    Console.Write("Supported parameters: ");
+                    PrintCommaSeparated(supportedParametersLower, ", ", USERINPUT);
+                    Console.WriteLine();
+                });
+            }
+        }
+        else
+        {
+            InColor(WARNING, () =>
+            {
+                Console.WriteLine("Missing command parameter.");
+                Console.Write("Supported parameters: ");
+                PrintCommaSeparated(supportedParametersLower, ", ", USERINPUT);
+                Console.WriteLine();
+            });
+        }
+    }
+
+    static bool NetworkingWrapper(string infoMessage, Action networkingAction)
+    {
+        try
+        {
+            InColor(INFO, infoMessage);
+            networkingAction();
+            InColorLn(INFO, " [ OK ]");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine();
+            InColorLn(ERROR, $"[x] Error: {ex.Message}");
+            return false;
+        }
+    }
+
+    #endregion
+
+    #region Color Helpers
 
     /// <summary>
     /// Executes action while console font is having specified color.
@@ -113,4 +487,30 @@ internal class Program
             Console.ForegroundColor = previousColor;
         }
     }
+
+    static void InColor(ConsoleColor color, string str)
+    {
+        InColor(color, () => Console.Write(str));
+    }
+
+    static void InColorLn(ConsoleColor color, string str)
+    {
+        InColor(color, () => Console.WriteLine(str));
+    }
+
+    static void PrintCommaSeparated(string[] items, string separator, ConsoleColor itemColor)
+    {
+        if ((items != null) && (items.Length > 0))
+        {
+            for (int i = 0; i < items.Length - 1; i++)
+            {
+                InColor(itemColor, items[i]);
+                Console.Write(separator);
+            }
+
+            InColor(itemColor, items[items.Length - 1]);
+        }
+    }
+
+    #endregion
 }
