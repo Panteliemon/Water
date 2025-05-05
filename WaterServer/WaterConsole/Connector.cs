@@ -68,4 +68,24 @@ internal class Connector
         Task<HttpResponseMessage> responseTask = httpClientPrivate.DeleteAsync($"/setup/plants/{plantIndex}");
         ServerException.ThrowIfError(responseTask.Result);
     }
+
+    public void AddTask(STask task)
+    {
+        string xml = ModelXml.TaskToStr(task);
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.PostAsync("/setup/tasks", new StringContent(xml));
+        ServerException.ThrowIfError(responseTask.Result);
+    }
+
+    public void UpdateTask(STask task)
+    {
+        string xml = ModelXml.TaskToStr(task);
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.PutAsync("/setup/tasks", new StringContent(xml));
+        ServerException.ThrowIfError(responseTask.Result);
+    }
+
+    public void DeleteTask(int id)
+    {
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.DeleteAsync($"/setup/tasks/{id}");
+        ServerException.ThrowIfError(responseTask.Result);
+    }
 }

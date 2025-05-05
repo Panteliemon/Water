@@ -96,4 +96,111 @@ public class SetupController : ControllerBase
             return Ok();
         });
     }
+
+    [HttpPost("/setup/tasks")]
+    public async Task<ActionResult> AddTask()
+    {
+        string xml = await Request.ReadBodyAsString();
+
+        return await criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            STask task = ModelXml.ParseTask(xml, model.FindPlant);
+            ActionResult validationResult = ValidateTask(model, task);
+            if (validationResult != null)
+                return validationResult;
+
+            // Approved. Assign ID
+            if (model.Tasks.Count > 0)
+            {
+                task.Id = model.Tasks.Max(t => t.Id) + 1;
+            }
+            else
+            {
+                task.Id = 1;
+            }
+
+            model.Tasks.Add(task);
+            await repository.WriteAll(model);
+            return Ok();
+        });
+    }
+
+    [HttpPut("/setup/tasks")]
+    public async Task<ActionResult> UpdateTask()
+    {
+        string xml = await Request.ReadBodyAsString();
+
+        return await criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            STask updated = ModelXml.ParseTask(xml, model.FindPlant);
+            int taskIndex = model.Tasks.FindIndex(t => t.Id == updated.Id);
+            if (taskIndex < 0)
+            {
+                return NotFound("Task not found");
+            }
+
+            ActionResult validationResult = ValidateTask(model, updated);
+            if (validationResult != null)
+                return validationResult;
+
+            // Approved.
+            model.Tasks[taskIndex] = updated;
+            await repository.WriteAll(model);
+            return Ok();
+        });
+    }
+
+    [HttpDelete("/setup/tasks/{id:int}")]
+    public Task<ActionResult> DeleteTask(int id)
+    {
+        return criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            int taskIndex = model.Tasks.FindIndex(t => t.Id == id);
+            if (taskIndex < 0)
+            {
+                return NotFound("Task not found");
+            }
+
+            model.Tasks.RemoveAt(taskIndex);
+            await repository.WriteAll(model);
+            return Ok();
+        });
+    }
+
+    private ActionResult ValidateTask(SModel model, STask task)
+    {
+        if (task.Items.Any(item => item.Plant == null))
+        {
+            return BadRequest("Task contains links to invalid or not existing plants.");
+        }
+
+        bool[] usedByIndex = new bool[SPlant.MAX_COUNT];
+        foreach (STaskItem item in task.Items)
+        {
+            if (usedByIndex[item.Plant.Index])
+            {
+                return BadRequest($"Duplicated plant within task: Valve No {item.Plant.ValveNo}");
+            }
+            else
+            {
+                usedByIndex[item.Plant.Index] = true;
+            }
+        }
+
+        if (task.UtcValidFrom > task.UtcValidTo)
+        {
+            return BadRequest($"Invalid task's date range.");
+        }
+
+        return null;
+    }
 }

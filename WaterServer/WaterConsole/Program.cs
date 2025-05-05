@@ -15,6 +15,7 @@ internal class Program
     const ConsoleColor WARNING = ConsoleColor.Yellow;
     const ConsoleColor ERROR = ConsoleColor.Red;
     const ConsoleColor REQUEST = ConsoleColor.Green;
+    const ConsoleColor FORMAT = ConsoleColor.Red;
 
     static Connector connector;
     static SModel model;
@@ -69,7 +70,7 @@ internal class Program
                         }
                         else if (parameterLower == "task")
                         {
-
+                            ExecuteAddTask(cmd.Parameters.Skip(1).ToList());
                         }
                     });
                 }
@@ -398,6 +399,42 @@ internal class Program
         return plant;
     }
 
+    static void ExecuteAddTask(IReadOnlyList<string> truncatedParameters)
+    {
+        if (!AutoPull())
+            return;
+
+        Tuple<DateTime, DateTime> taskDatesLocal = null;
+        if (truncatedParameters.Count > 0)
+        {
+            string glued = string.Join(' ', truncatedParameters);
+            taskDatesLocal = StringUtils.ParseTaskTime(glued, DateTime.Today);
+            if (taskDatesLocal == null)
+            {
+                InColorLn(WARNING, "Task start-end time not parsed from command parameters.");
+            }
+            else
+            {
+                taskDatesLocal = new Tuple<DateTime, DateTime>(
+                    DateTime.SpecifyKind(taskDatesLocal.Item1, DateTimeKind.Local),
+                    DateTime.SpecifyKind(taskDatesLocal.Item2, DateTimeKind.Local)
+                );
+
+                InColorLn(INFO, $"Valid From: {taskDatesLocal.Item1:dd/MM/yyyy HH:mm}");
+                InColorLn(INFO, $"Valid To: {taskDatesLocal.Item2:dd/MM/yyyy HH:mm}");
+            }
+        }
+
+        if (taskDatesLocal == null)
+        {
+            taskDatesLocal = QueryTaskTimes();
+            if (taskDatesLocal == null)
+                return;
+        }
+
+        // TODO
+    }
+
     #endregion
 
     #region Input "Dialogs"
@@ -540,6 +577,90 @@ internal class Program
         }
     }
 
+    static Tuple<DateTime, DateTime> QueryTaskTimes()
+    {
+        InColor(REQUEST, () =>
+        {
+            Console.WriteLine("Enter task start-end time. Format:");
+            Console.Write("  ");
+            InColor(USERINPUT, "a");
+            Console.WriteLine(" - tomorrow, whole day");
+            Console.Write("  ");
+            InColor(USERINPUT, "b");
+            Console.WriteLine(" - today, whole day");
+
+            Console.Write("  ");
+            PrintInFormatBraces("dd/MM", USERINPUT);
+            Console.Write(" or ");
+            PrintInFormatBraces("dd/MM/yy", USERINPUT);
+            Console.Write(" or ");
+            PrintInFormatBraces("dd/MM/yyyy", USERINPUT);
+            Console.WriteLine(" - specific date, whole day");
+
+            Console.Write("  ");
+            InColor(USERINPUT, "a ");
+            PrintInFormatBraces("hh", USERINPUT);
+            InColor(USERINPUT, " - ");
+            PrintInFormatBraces("hh", USERINPUT);
+            Console.WriteLine(" - tomorrow, time range (from hh:00 to hh:00)");
+
+            Console.Write("  ");
+            PrintInFormatBraces("dd/MM", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("hh:mm", USERINPUT);
+            InColor(USERINPUT, " - ");
+            PrintInFormatBraces("dd/MM/yyyy", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("hh", USERINPUT);
+            Console.WriteLine(" - specify both start/end dates and times with/without minutes and year,");
+
+            Console.WriteLine("and so on. If both dates specified - cannot use shorthands 'a' or 'b'.");
+        });
+
+        while (true)
+        {
+            InColor(REQUEST, "Type ");
+            InColor(USERINPUT, "q");
+            InColor(REQUEST, " or ");
+            InColor(USERINPUT, "cancel");
+            InColorLn(REQUEST, " for canceling the operation.");
+
+            InColor(REQUEST, "> ");
+
+            string str = Console.ReadLine();
+            string lower = str.Trim().ToLower();
+            if ((lower == "cancel") || (lower == "^c") || (lower == "q"))
+                return null;
+
+            Tuple<DateTime, DateTime> parsed = StringUtils.ParseTaskTime(str, DateTime.Today);
+            if (parsed == null)
+            {
+                InColorLn(WARNING, "Didn't parse time range :( Check the values.");
+            }
+            else
+            {
+                if (parsed.Item1 > parsed.Item2)
+                {
+                    InColor(WARNING, "Incorrect values: start time greater than end time.");
+                }
+                else
+                {
+                    InColorLn(INFO, $"Valid From: {parsed.Item1:dd/MM/yyyy HH:mm}");
+                    InColorLn(INFO, $"Valid To: {parsed.Item2:dd/MM/yyyy HH:mm}");
+
+                    return new Tuple<DateTime, DateTime>(
+                        DateTime.SpecifyKind(parsed.Item1, DateTimeKind.Local),
+                        DateTime.SpecifyKind(parsed.Item2, DateTimeKind.Local)
+                    );
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Parsing Input
+
     static bool[] ReadSimpleFlags(IReadOnlyList<char> lowerCaseFlags, IReadOnlyList<string> parameters)
     {
         bool[] result = new bool[lowerCaseFlags.Count];
@@ -612,6 +733,8 @@ internal class Program
             return -1;
         }
     }
+
+    
 
     #endregion
 
@@ -727,6 +850,16 @@ internal class Program
 
             InColor(itemColor, items[items.Length - 1]);
         }
+    }
+
+    static void PrintInFormatBraces(string value, ConsoleColor? valueColor = null)
+    {
+        InColor(FORMAT, "{");
+        if (valueColor.HasValue)
+            InColor(valueColor.Value, value);
+        else
+            Console.Write(value);
+        InColor(FORMAT, "}");
     }
 
     #endregion
