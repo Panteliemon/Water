@@ -53,4 +53,19 @@ public class SModel
 
         return result;
     }
+
+    public SPlant FindPlant(int plantIndex)
+    {
+        if (Plants != null)
+        {
+            for (int i = 0; i < Plants.Count; i++)
+            {
+                SPlant plant = Plants[i];
+                if (plant.Index == plantIndex)
+                    return plant;
+            }
+        }
+
+        return null;
+    }
 }

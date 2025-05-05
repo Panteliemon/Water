@@ -15,6 +15,10 @@ public class SPlant
     /// Zero-based
     /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// 1-based
+    /// </summary>
+    public int ValveNo => Index + 1;
     public SPlantType PlantType { get; set; }
 
     public static SPlant Empty(int index)

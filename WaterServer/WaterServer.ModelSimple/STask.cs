@@ -22,4 +22,12 @@ public class STask
         result.Items = Items.Select(x => x.Clone()).ToList();
         return result;
     }
+
+    public static STask Empty()
+    {
+        return new STask()
+        {
+            Items = new List<STaskItem>()
+        };
+    }
 }
