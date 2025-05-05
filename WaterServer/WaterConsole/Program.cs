@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using WaterServer.ModelSimple;
+using WaterServer.Xml;
 
 namespace WaterConsole;
 
@@ -106,7 +107,7 @@ internal class Program
                 }
                 else if ((cmd.NameLower == "pl") || (cmd.NameLower == "plants"))
                 {
-
+                    ExecutePlantList(cmd.Parameters);
                 }
                 else if ((cmd.NameLower == "tl") || (cmd.NameLower == "tasks"))
                 {
@@ -184,6 +185,39 @@ internal class Program
             SModel newModel = connector.Pull();
             model = newModel;
         });
+    }
+
+    static void ExecutePlantList(IReadOnlyList<string> parameters)
+    {
+        if (!AutoPull())
+            return;
+
+        bool[] flags = ReadSimpleFlags(new char[] { 'x' }, parameters);
+        bool isXml = flags[0];
+
+        if (isXml)
+        {
+            for (int i = 0; i < model.Plants.Count; i++)
+            {
+                InColorLn(INFO, ModelXml.PlantToStr(model.Plants[i]));
+            }
+        }
+        else
+        {
+            GridBuilder gb = new();
+            gb[0, 0] = "Valve No";
+            gb[0, 1] = "Type";
+            gb.ColumnSeparator = "   ";
+            gb.HeaderRowSeparator = '-';
+
+            for (int i = 0; i < model.Plants.Count; i++)
+            {
+                gb[i + 1, 0] = model.Plants[i].ValveNo.ToString();
+                gb[i + 1, 1] = model.Plants[i].PlantType.ToString();
+            }
+
+            InColorLn(INFO, gb.ToString());
+        }
     }
 
     static void ExecuteAddPlant()
@@ -503,6 +537,79 @@ internal class Program
             {
                 InColorLn(WARNING, "Please only use Y or N");
             }
+        }
+    }
+
+    static bool[] ReadSimpleFlags(IReadOnlyList<char> lowerCaseFlags, IReadOnlyList<string> parameters)
+    {
+        bool[] result = new bool[lowerCaseFlags.Count];
+
+        if (parameters.Count > 0)
+        {
+            if (parameters[0].Length > 1)
+            {
+                // All flags concatenated from the first parameter
+                string lower = parameters[0].ToLower();
+                HashSet<char> unknowns = new();
+                for (int i = 0; i < lower.Length; i++)
+                {
+                    char flagCharLower = lower[i];
+                    int index = IndexOfChar(lowerCaseFlags, flagCharLower);
+                    if (index >= 0)
+                    {
+                        result[index] = true;
+                    }
+                    else
+                    {
+                        if (!unknowns.Contains(flagCharLower))
+                        {
+                            InColorLn(INFO, $"Unsupported flag: {flagCharLower}");
+                            unknowns.Add(flagCharLower);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Flags in parameters individually
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    string parameter = parameters[i];
+                    if (parameter.Length > 0)
+                    {
+                        if (parameter.Length == 1)
+                        {
+                            char flagCharLower = parameter.ToLower()[0];
+                            int index = IndexOfChar(lowerCaseFlags, flagCharLower);
+                            if (index >= 0)
+                            {
+                                result[index] = true;
+                            }
+                            else
+                            {
+                                InColorLn(INFO, $"Unsupported flag: {parameter}");
+                            }
+                        }
+                        else
+                        {
+                            InColorLn(INFO, $"Unknown command parameter: {parameter}");
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
+
+        static int IndexOfChar(IReadOnlyList<char> list, char c)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == c)
+                    return i;
+            }
+
+            return -1;
         }
     }
 
