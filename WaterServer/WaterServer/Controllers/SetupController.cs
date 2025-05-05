@@ -37,7 +37,61 @@ public class SetupController : ControllerBase
 
             model.Plants.Add(plant);
             await repository.WriteAll(model);
+            return Ok();
+        });
+    }
 
+    [HttpPut("/setup/plants")]
+    public async Task<ActionResult> UpdatePlant()
+    {
+        string xml = await Request.ReadBodyAsString();
+        SPlant plant = ModelXml.ParsePlant(xml);
+
+        return await criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            SPlant existingPlant = model.Plants.FirstOrDefault(x => x.Index == plant.Index);
+            if (existingPlant == null)
+            {
+                return NotFound("Plant not found");
+            }
+
+            existingPlant.PlantType = plant.PlantType;
+
+            await repository.WriteAll(model);
+            return Ok();
+        });
+    }
+
+    [HttpDelete("/setup/plants/{index:int}")]
+    public Task<ActionResult> DeletePlant(int index)
+    {
+        return criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            SPlant existingPlant = model.Plants.FirstOrDefault(x => x.Index == index);
+            if (existingPlant == null)
+            {
+                return NotFound("Plant not found");
+            }
+
+            model.Plants.Remove(existingPlant);
+            foreach (STask task in model.Tasks)
+            {
+                for (int j = task.Items.Count - 1; j >= 0; j--)
+                {
+                    if (task.Items[j].Plant == existingPlant)
+                    {
+                        task.Items.RemoveAt(j);
+                    }
+                }
+            }
+
+            await repository.WriteAll(model);
             return Ok();
         });
     }

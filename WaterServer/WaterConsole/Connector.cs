@@ -45,4 +45,17 @@ internal class Connector
         Task<HttpResponseMessage> responseTask = httpClient.PostAsync("/setup/plants", new StringContent(xml));
         ServerException.ThrowIfError(responseTask.Result);
     }
+
+    public void UpdatePlant(SPlant plant)
+    {
+        string xml = ModelXml.PlantToStr(plant);
+        Task<HttpResponseMessage> responseTask = httpClient.PutAsync("/setup/plants", new StringContent(xml));
+        ServerException.ThrowIfError(responseTask.Result);
+    }
+
+    public void DeletePlant(int plantIndex)
+    {
+        Task<HttpResponseMessage> responseTask = httpClient.DeleteAsync($"/setup/plants/{plantIndex}");
+        ServerException.ThrowIfError(responseTask.Result);
+    }
 }

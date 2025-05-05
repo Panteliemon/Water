@@ -78,7 +78,7 @@ internal class Program
                     {
                         if (parameterLower == "plant")
                         {
-
+                            ExecuteUpdatePlant(cmd.Parameters.Skip(1).ToList());
                         }
                         else if (parameterLower == "task")
                         {
@@ -92,7 +92,7 @@ internal class Program
                     {
                         if (parameterLower == "plant")
                         {
-
+                            ExecuteDeletePlant(cmd.Parameters.Skip(1).ToList());
                         }
                         else if (parameterLower == "task")
                         {
@@ -252,6 +252,116 @@ internal class Program
         {
             InColorLn(INFO, "Add plant aborted");
         }
+    }
+
+    static void ExecuteUpdatePlant(IReadOnlyList<string> truncatedParameters)
+    {
+        if (!AutoPull())
+            return;
+
+        SPlant plant = SelectPlantForUpdate(truncatedParameters);
+        if (plant == null)
+            return;
+
+        SPlantType newType = QueryEnum("Enter new Type:",
+            Enum.GetValues<SPlantType>().Where(x => x != SPlantType.Unused));
+
+        InColorLn(INFO, $"Valve Number: {plant.ValveNo}");
+        InColorLn(INFO, $"Type: {plant.PlantType} -> {newType}");
+
+        if (AskYesNo("Save to server?"))
+        {
+            plant.PlantType = newType;
+            if (NetworkingWrapper("Sending data...", () =>
+                {
+                    connector.UpdatePlant(plant);
+                }))
+            {
+                ExecutePull();
+            }
+            else
+            {
+                InColorLn(ERROR, "Update plant aborted");
+            }
+        }
+        else
+        {
+            InColorLn(INFO, "Update plant aborted");
+        }
+    }
+
+    static void ExecuteDeletePlant(IReadOnlyList<string> truncatedParameters)
+    {
+        if (!AutoPull())
+            return;
+
+        SPlant plant = SelectPlantForUpdate(truncatedParameters);
+        if (plant == null)
+            return;
+
+        if (AskYesNo("Delete?"))
+        {
+            if (model.Tasks.Any(t => t.Items.Any(item => item.Plant == plant)))
+            {
+                InColorLn(WARNING, "This plant is used in tasks.");
+                InColorLn(WARNING, "Deleting this plant will delete its entries from all tasks.");
+            }
+
+            if (AskYesNo("[!] DELETE PLANT", WARNING))
+            {
+                if (NetworkingWrapper("Sending delete request...", () =>
+                    {
+                        connector.DeletePlant(plant.Index);
+                    }))
+                {
+                    ExecutePull();
+                }
+            }
+        }
+    }
+
+    static SPlant SelectPlantForUpdate(IReadOnlyList<string> truncatedParameters)
+    {
+        if (model.Plants.Count == 0)
+        {
+            InColorLn(INFO, "There are no plants");
+            return null;
+        }
+
+        SPlant plant = null;
+        if (truncatedParameters.Count > 0)
+        {
+            if (int.TryParse(truncatedParameters[0].Trim(), out int valveNo))
+            {
+                plant = model.Plants.FirstOrDefault(x => x.ValveNo == valveNo);
+                if (plant == null)
+                {
+                    InColorLn(WARNING, $"Plant with Valve Number {valveNo} doesn't exist");
+                }
+            }
+            else
+            {
+                InColorLn(WARNING, $"Invalid parameter: {truncatedParameters[0]}");
+            }
+        }
+
+        if (plant == null)
+        {
+            if (model.Plants.Count == 1)
+            {
+                plant = model.Plants[0];
+                InColorLn(INFO, $"Plant {plant.ValveNo} was automatically selected as the only available option.");
+            }
+            else
+            {
+                int valveNo = QueryInt("Enter plant's Valve Number", model.Plants.Select(x => x.ValveNo));
+                plant = model.Plants.First(x => x.ValveNo == valveNo);
+            }
+        }
+
+        InColorLn(INFO, $"Valve Number: {plant.ValveNo}");
+        InColorLn(INFO, $"Type: {plant.PlantType}");
+        return plant;
     }
 
     #endregion
