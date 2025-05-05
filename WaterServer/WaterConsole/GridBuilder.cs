@@ -21,6 +21,19 @@ public class GridBuilder
     public char? RowSeparator { get; set; }
     public string ColumnSeparator { get; set; }
 
+    public Func<int, bool> CustomShouldRenderRowSeparator { get; set; }
+    public Func<int, bool> CustomShouldRenderHeaderRowSeparator { get; set; }
+
+    public GridBuilder()
+    {
+    }
+
+    public GridBuilder(int rows, int columns)
+    {
+        IncreaseColumnCount(columns);
+        IncreaseRowCount(rows);
+    }
+
     public string this[int row, int column]
     {
         get
@@ -78,7 +91,11 @@ public class GridBuilder
             {
                 sb.AppendLine();
 
-                if (i == 1)
+                bool isHeader = (CustomShouldRenderHeaderRowSeparator != null)
+                    ? CustomShouldRenderHeaderRowSeparator(i)
+                    : (i == 1);
+
+                if (isHeader)
                 {
                     if (RowSeparator.HasValue || HeaderRowSeparator.HasValue)
                     {
@@ -89,7 +106,11 @@ public class GridBuilder
                 }
                 else
                 {
-                    if (RowSeparator.HasValue)
+                    bool shouldDraw = (CustomShouldRenderRowSeparator != null)
+                        ? CustomShouldRenderRowSeparator(i)
+                        : true;
+
+                    if (shouldDraw && RowSeparator.HasValue)
                     {
                         sb.Append(RowSeparator.Value, rowLength);
                         sb.AppendLine();

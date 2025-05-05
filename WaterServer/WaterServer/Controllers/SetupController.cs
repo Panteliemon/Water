@@ -124,7 +124,7 @@ public class SetupController : ControllerBase
 
             model.Tasks.Add(task);
             await repository.WriteAll(model);
-            return Ok();
+            return Ok(task.Id.ToString());
         });
     }
 

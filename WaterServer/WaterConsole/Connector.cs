@@ -69,11 +69,13 @@ internal class Connector
         ServerException.ThrowIfError(responseTask.Result);
     }
 
-    public void AddTask(STask task)
+    public int AddTask(STask task)
     {
         string xml = ModelXml.TaskToStr(task);
         Task<HttpResponseMessage> responseTask = httpClientPrivate.PostAsync("/setup/tasks", new StringContent(xml));
         ServerException.ThrowIfError(responseTask.Result);
+        string strId = responseTask.Result.Content.ReadAsStringAsync().Result;
+        return int.Parse(strId);
     }
 
     public void UpdateTask(STask task)

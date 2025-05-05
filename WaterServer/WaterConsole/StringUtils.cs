@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WaterServer.ModelSimple;
 
 namespace WaterConsole;
 
@@ -510,4 +511,82 @@ internal static class StringUtils
     }
 
     #endregion
+
+    public static List<string> SplitIntoLines(string str)
+    {
+        List<string> result = new List<string>();
+        if (string.IsNullOrEmpty(str))
+        {
+            result.Add(str);
+            return result;
+        }
+
+        int state = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            switch (state)
+            {
+                case 0:
+                    if (c == 13)
+                    {
+                        state = 1;
+                    }
+                    else if (c == 10)
+                    {
+                        result.Add(sb.ToString());
+                        sb = new StringBuilder();
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+                    break;
+                case 1: // after 13
+                    if (c == 13)
+                    {
+                        sb.Append((char)13);
+                        // stay in state 1
+                    }
+                    else if (c == 10)
+                    {
+                        result.Add(sb.ToString());
+                        sb = new StringBuilder();
+                        state = 0;
+                    }
+                    else
+                    {
+                        sb.Append((char)13);
+                        sb.Append(c);
+                        state = 0;
+                    }
+                    break;
+            }
+        }
+
+        if (state == 1)
+        {
+            sb.Append((char)13);
+        }
+
+        result.Add(sb.ToString());
+
+        return result;
+    }
+
+    public static string TaskStatusToGridStr(STaskStatus taskStatus)
+    {
+        switch (taskStatus)
+        {
+            case STaskStatus.NotStarted: return "[N/S]";
+            case STaskStatus.InProgress: return "[PRG...]";
+            case STaskStatus.Success: return "[DONE]";
+            case STaskStatus.LowRate: return "[ERR:L]";
+            case STaskStatus.NoCounter: return "[ERR:C]";
+            case STaskStatus.Error: return "[ERR]";
+        }
+
+        return "[???]";
+    }
 }
