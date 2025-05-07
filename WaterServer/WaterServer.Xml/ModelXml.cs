@@ -114,7 +114,8 @@ public static class ModelXml
         {
             Plants = model.Plants?.Select(x => PlantToDto(x)).ToList(),
             Tasks = model.Tasks?.Select(x => TaskToDto(x)).ToList(),
-            ClientActivities = model.ClientActivities?.Select(x => CAToDto(x)).ToList()
+            ClientActivities = model.ClientActivities?.Select(x => CAToDto(x)).ToList(),
+            LastClientActivity = (model.LastClientActivity == null) ? null : CAToDto(model.LastClientActivity)
         };
 
         return result;
@@ -212,6 +213,11 @@ public static class ModelXml
             }
 
             result.ClientActivities.Sort((c1, c2) => c1.UtcTimeStamp.CompareTo(c2.UtcTimeStamp));
+        }
+
+        if (dto.LastClientActivity != null)
+        {
+            result.LastClientActivity = DtoToCA(dto.LastClientActivity);
         }
 
         return result;

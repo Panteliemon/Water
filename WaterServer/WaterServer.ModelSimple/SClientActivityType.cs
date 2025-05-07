@@ -10,5 +10,6 @@ public enum SClientActivityType
 {
     Unknown = 0,
     TaskRequest = 1,
-    TaskComplete = 2
+    TaskComplete = 2,
+    Error = 3
 }
