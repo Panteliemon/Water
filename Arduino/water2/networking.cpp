@@ -51,10 +51,11 @@ bool sendPostRequest(const char *route, Buffer &message, Buffer *response) {
     netClient.println(apiKey);
     
     message.ensureTerminalZero();
+    netClient.print("Content-Length: ");
+    netClient.println(message.getLength() - 1); // 1 for terminal zero
+
     if (message.getLength() > 1) { // non empty when strip away terminal zero
       netClient.println("Content-Type: text/plain");
-      netClient.print("Content-Length: ");
-      netClient.println(message.getLength() - 1); // 1 for terminal zero
       netClient.println();
       netClient.println(message.p());
     }
@@ -65,6 +66,14 @@ bool sendPostRequest(const char *route, Buffer &message, Buffer *response) {
     while (netClient.connected()) {
       while (netClient.available()) {
         char c = netClient.read();
+
+        // TODO first line is like
+        // HTTP/1.1 403 Forbidden
+        // Then find
+        // Content-Type: text/plain; charset=utf-8
+        // Content-Length: 2
+        
+        // Line breaks are 13-10.
 
         Serial.print(c); // for gruesome debug only
       }
