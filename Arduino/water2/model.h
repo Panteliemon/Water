@@ -17,7 +17,7 @@ struct TaskItem {
 };
 
 struct Task {
-  int id;
-  TaskStatus items[NUMBER_OF_VALVES];
+  long id;
+  TaskItem items[NUMBER_OF_VALVES];
   int itemsCount;
 };

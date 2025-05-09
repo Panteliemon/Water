@@ -96,6 +96,35 @@ void Buffer::writeDecimalInt(int value) {
   }
 }
 
+void Buffer::writeDecimalLong(long value) {
+  if (value < 0) {
+    writeChar('-');
+    if (value == -2147483648) {
+      Serial.println("Ej tu nost!");
+      writeChar('2'); writeChar('1'); writeChar('4'); writeChar('7');
+      writeChar('4'); writeChar('8'); writeChar('3');
+      writeChar('6'); writeChar('4'); writeChar('8');
+    } else {
+      writeDecimalLong(-value);
+    }
+  } else if (value > 0) {
+    // Compare with 10th of the value in order to avoid overflow
+    long valueDividedBy10 = value / (long)10;
+    long currentPowerOf10 = 1;
+    while (currentPowerOf10 <= valueDividedBy10) {
+      currentPowerOf10 *= 10;
+    }
+
+    while (currentPowerOf10 > 0) {
+      long digit = (value / currentPowerOf10) % 10;
+      writeChar('0' + digit);
+      currentPowerOf10 /= 10;
+    }
+  } else {
+    writeChar('0');
+  }
+}
+
 void Buffer::ensureTerminalZero() {
   if (_usedLength == 0) {
     setLength(1);
@@ -170,6 +199,76 @@ bool Buffer::tryReadDecimalInt(int &value) {
 
           // Not an overflow
           result *= 10;
+          result += digit;
+        } else {
+          // Number ended. Move cursor back so it's before the symbol we've just read
+          _pos--;
+          break;
+        }
+      }
+
+      value = (isNegative) ? -result : result;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+bool Buffer::tryReadDecimalLong(long &value) {
+  char c = 0;
+  if (tryReadChar(c)) {
+    bool isNegative = false;
+    if (c == '-') {
+      isNegative = true;
+      if (!tryReadChar(c)) {
+        return false;
+      }
+    }
+    
+    // At least one digit is required
+    if ((c >= '0') && (c <= '9')) {
+      long result = c - '0';
+
+      while (tryReadChar(c)) {
+        if ((c >= '0') && (c <= '9')) {
+          long digit = c - '0';
+          if (result > 214748364) {
+            // No more digits allowed: overflow
+            return false;
+          } else if (result == 214748364) {
+            if (isNegative) {
+              if (digit > 8) {
+                return false;
+              } else if (digit == 8) {
+                // Not overflow when negative, but we cannot write such value into result since result is positive.
+                // Then handle personally! Don't use outer cycle anymore.
+                // Next symbol must be not a digit to succeed
+                if (!tryReadChar(c)) {
+                  value = -2147483648;
+                  return true;
+                }
+                if ((c >= '0') && (c <= '9')) {
+                  // Overflow: a digit after -2147483648
+                  return false;
+                } else {
+                  _pos--; // cursor must stop before the non-digit
+                  value = -2147483648;
+                  return true;
+                }
+              }
+            } else {
+              if (digit > 7) {
+                return false;
+              }
+            }
+            // Not an overflow this time, can multiply.
+          }
+
+          // Not an overflow
+          result *= (long)10;
           result += digit;
         } else {
           // Number ended. Move cursor back so it's before the symbol we've just read

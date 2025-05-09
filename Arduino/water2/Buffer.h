@@ -23,6 +23,7 @@ class Buffer {
 
     void writeChar(char c);
     void writeDecimalInt(int value);
+    void writeDecimalLong(long value);
 
     // If contents of the buffer don't finish with \0 char, adds it to the end.
     // Doesn't change the R/W position!
@@ -33,4 +34,7 @@ class Buffer {
     // Position before call should be before the first digit.
     // Position after the call (if success) is either before the first non-digit or at the end of the buffer (whatever is earlier)
     bool tryReadDecimalInt(int &value);
+    // Position before call should be before the first digit.
+    // Position after the call (if success) is either before the first non-digit or at the end of the buffer (whatever is earlier)
+    bool tryReadDecimalLong(long &value);
 };

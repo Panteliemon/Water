@@ -28,7 +28,7 @@ internal class WaterConfig : IWaterConfig
         try
         {
             string consoleApiKeyFile = Path.Combine(secretsFolder, "apikey-console.txt");
-            ApiKeyConsole = File.ReadAllText(consoleApiKeyFile);
+            ApiKeyConsole = File.ReadAllText(consoleApiKeyFile).Trim();
         }
         catch (Exception ex)
         {
