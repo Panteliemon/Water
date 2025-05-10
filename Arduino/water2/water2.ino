@@ -1,11 +1,9 @@
 #include "model.h"
 #include "networking.h"
+#include "hardware.h"
 
 void setup() {
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
-  delay(250);
-  digitalWrite(13, LOW);
+  initHardware();
 
   Serial.begin(9600);
   while (!Serial);
@@ -31,7 +29,7 @@ void loop() {
 
       // Carbonate puddle
       delay(10000);
-      currentTask.items[i].status = SUCCESS;
+      currentTask.items[i].status = TS_SUCCESS;
       reportTaskResult(currentTask, i);
     }
   }

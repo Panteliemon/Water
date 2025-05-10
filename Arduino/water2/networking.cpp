@@ -162,7 +162,7 @@ bool tryParseTask(Buffer &buffer, Task &t) {
 
       t.items[t.itemsCount].valveIndex = parsedValveIndex;
       t.items[t.itemsCount].volumeMl = 0;
-      t.items[t.itemsCount].status = NOTSTARTED;
+      t.items[t.itemsCount].status = TS_NOTSTARTED;
       t.itemsCount++;
       
       // We allow missing "V" parameter, interpret as 0.
@@ -232,7 +232,7 @@ bool tryGetNextTask(Task &t) {
 void reportTaskResult(Task &t, int itemIndex) {
   if ((itemIndex >= 0) && (itemIndex < NUMBER_OF_VALVES) && (itemIndex < t.itemsCount)) {
     // Don't report zeroth state
-    if (t.items[itemIndex].status != NOTSTARTED) {
+    if (t.items[itemIndex].status != TS_NOTSTARTED) {
       // Ok
       requestBuffer.setLength(0);
       requestBuffer.writeChar('T');
