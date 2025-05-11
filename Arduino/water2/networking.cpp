@@ -23,24 +23,29 @@ typedef enum {
 
 int wlStatus = WL_IDLE_STATUS;
 WiFiSSLClient netClient;
+bool wasInitNetwork = false;
 Buffer requestBuffer;
 Buffer responseBuffer;
 
 void initNetwork() {
-  if (WiFi.status() == WL_NO_MODULE) {
-    Serial.println("Communication with WiFi module failed!");
-    while (true);
+  if (!wasInitNetwork) {
+    if (WiFi.status() == WL_NO_MODULE) {
+      Serial.println("Communication with WiFi module failed!");
+      while (true);
+    }
+
+    while (wlStatus != WL_CONNECTED) {
+      Serial.print("Attempting to connect to SSID: ");
+      Serial.println(ssid);
+      wlStatus = WiFi.begin(ssid, pass);
+
+      delay(5000);
+    }
+
+    netClient.setCACert(serverCert);
+
+    wasInitNetwork = true;
   }
-
-  while (wlStatus != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    wlStatus = WiFi.begin(ssid, pass);
-
-    delay(5000);
-  }
-
-  netClient.setCACert(serverCert);
 }
 
 HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response) {

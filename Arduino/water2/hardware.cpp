@@ -77,40 +77,45 @@ bool getExtX() {
   return digitalRead(PIN_EXT_X) == HIGH;
 }
 
+InputMask getInputs(InputMask inputs) {
+  InputMask result = (InputMask)0;
+
+  if ((inputs & I_ESTOP) != 0) {
+    if (getEStop()) {
+      result |= I_ESTOP;
+    }
+  }
+
+  if ((inputs & I_EXTA) != 0) {
+    if (getExtA()) {
+      result |= I_EXTA;
+    }
+  }
+
+  if ((inputs & I_EXTB) != 0) {
+    if (getExtB()) {
+      result |= I_EXTB;
+    }
+  }
+
+  if ((inputs & I_EXTX) != 0) {
+    if (getExtX()) {
+      result |= I_EXTX;
+    }
+  }
+
+  return result;
+}
+
 InputMask waitForSet(InputMask inputsToWait) {
   if (inputsToWait == 0) {
     return (InputMask)0;
   }
 
   while (true) {
-    InputMask switchedNowMask = (InputMask)0;
-
-    if ((inputsToWait & I_ESTOP) != 0) {
-      if (getEStop()) {
-        switchedNowMask |= I_ESTOP;
-      }
-    }
-
-    if ((inputsToWait & I_EXTA) != 0) {
-      if (getExtA()) {
-        switchedNowMask |= I_EXTA;
-      }
-    }
-
-    if ((inputsToWait & I_EXTB) != 0) {
-      if (getExtB()) {
-        switchedNowMask |= I_EXTB;
-      }
-    }
-
-    if ((inputsToWait & I_EXTX) != 0) {
-      if (getExtX()) {
-        switchedNowMask |= I_EXTX;
-      }
-    }
-
-    if (switchedNowMask != 0) {
-      return switchedNowMask;
+    InputMask inputsNow = getInputs(inputsToWait);
+    if ((inputsToWait & inputsNow) != 0) {
+      return inputsNow & inputsToWait;
     }
   }
 }
@@ -121,34 +126,28 @@ InputMask waitForReset(InputMask inputsToWait) {
   }
 
   while (true) {
-    InputMask switchedNowMask = (InputMask)0;
-
-    if ((inputsToWait & I_ESTOP) != 0) {
-      if (!getEStop()) {
-        switchedNowMask |= I_ESTOP;
-      }
+    InputMask inputsNow = getInputs(inputsToWait);
+    if ((inputsToWait & inputsNow) != inputsToWait) {
+      return (~inputsNow) & inputsToWait;
     }
+  }
+}
 
-    if ((inputsToWait & I_EXTA) != 0) {
-      if (!getExtA()) {
-        switchedNowMask |= I_EXTA;
-      }
-    }
+InputsChange waitForChange(InputMask inputsToWait) {
+  InputsChange result;
+  result.inputsState = (InputMask)0;
+  result.changedInputs = (InputMask)0;
 
-    if ((inputsToWait & I_EXTB) != 0) {
-      if (!getExtB()) {
-        switchedNowMask |= I_EXTB;
-      }
-    }
+  if (inputsToWait == 0) {
+    return result;
+  }
 
-    if ((inputsToWait & I_EXTX) != 0) {
-      if (!getExtX()) {
-        switchedNowMask |= I_EXTX;
-      }
-    }
-
-    if (switchedNowMask != 0) {
-      return switchedNowMask;
+  InputMask initialInputsState = getInputs(inputsToWait);
+  while (true) {
+    result.inputsState = getInputs(inputsToWait);
+    if (result.inputsState != initialInputsState) {
+      result.changedInputs = result.inputsState ^ initialInputsState;
+      return result;
     }
   }
 }

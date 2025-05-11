@@ -15,8 +15,10 @@ typedef enum {
   I_EXTX = 8,
 } InputMask;
 
-inline InputMask operator|(InputMask x, InputMask y) { return static_cast<InputMask>(static_cast<int>(x) | static_cast<int>(y)); }
 inline InputMask operator&(InputMask x, InputMask y) { return static_cast<InputMask>(static_cast<int>(x) & static_cast<int>(y)); }
+inline InputMask operator|(InputMask x, InputMask y) { return static_cast<InputMask>(static_cast<int>(x) | static_cast<int>(y)); }
+inline InputMask operator~(InputMask x) { return static_cast<InputMask>(!static_cast<int>(x)); }
+inline InputMask operator^(InputMask x, InputMask y) { return static_cast<InputMask>(static_cast<int>(x) ^ static_cast<int>(y)); }
 inline InputMask &operator|=(InputMask &x, InputMask y) {
   x = x | y;
   return x;
@@ -26,6 +28,13 @@ inline InputMask &operator|=(InputMask &x, InputMask y) {
 InputMask waitForSet(InputMask inputsToWait);
 // Waits until any of specified inputs changes its state to false. If already false - exits immediately. Result - mask of inputs which have changed.
 InputMask waitForReset(InputMask inputsToWait);
+
+struct InputsChange {
+  InputMask changedInputs;
+  InputMask inputsState;
+}
+// Waits until any of specified inputs changes its state compared to right now (when the func was just called)
+InputsChange waitForChange(InputMask inputsToWait);
 
 // ---------- Outputs ----------
 
