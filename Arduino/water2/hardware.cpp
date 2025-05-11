@@ -117,6 +117,10 @@ InputMask waitForSet(InputMask inputsToWait) {
     if ((inputsToWait & inputsNow) != 0) {
       return inputsNow & inputsToWait;
     }
+
+    // Arduino UNO R4 WiFi too fast, my hardware debounces are not enough anymore :,( 
+    // Programmatic "debounce":
+    delay(20);
   }
 }
 
@@ -130,6 +134,9 @@ InputMask waitForReset(InputMask inputsToWait) {
     if ((inputsToWait & inputsNow) != inputsToWait) {
       return (~inputsNow) & inputsToWait;
     }
+
+    // Debounce
+    delay(20);
   }
 }
 
@@ -149,6 +156,9 @@ InputsChange waitForChange(InputMask inputsToWait) {
       result.changedInputs = result.inputsState ^ initialInputsState;
       return result;
     }
+
+    // Debounce
+    delay(20);
   }
 }
 

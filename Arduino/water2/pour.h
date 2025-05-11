@@ -9,5 +9,5 @@ int getCountsPerLiter();
 // Write sensor's scaling factor to EEPROM
 void setCountsPerLiter(int value);
 
-const int MIN_COUNTS_PER_LITER = 200;
-const int MAX_COUNTS_PER_LITER = 500;
+const int MIN_COUNTS_PER_LITER = 300;
+const int MAX_COUNTS_PER_LITER = 520;

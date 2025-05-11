@@ -8,6 +8,9 @@ void setup() {
 
   Serial.begin(9600);
   while (!Serial);
+
+  // Debounced inputs: give time for level to establish
+  delay(200);
 }
 
 void loop() {
@@ -63,10 +66,10 @@ void mainLoop() {
 void blinkFast(int numberOfTimes) {
   for (int i=0; i<numberOfTimes; i++) {
     if (i > 0) {
-      delay(89);
+      delay(170);
     }
     setExtLed(true);
-    delay(77);
+    delay(80);
     setExtLed(false);
   }
 }
@@ -132,6 +135,7 @@ int enterValveIndexUnderEStop() {
       // Repeat over.
     } else {
       // Display to the user
+      delay(250); // some time to put hand away to see the LED
       blinkMedium(xPressedCount);
       return xPressedCount - 1;
     }
@@ -229,19 +233,19 @@ void calibration() {
         displayDigit(countsPerLiter % 10);
       } else {
         // Edit
-        const int STEP = 5;
+        const int STEP = 10;
         if (getExtB()) {
           // Increment
-          if (countsPerLiter - STEP >= MIN_COUNTS_PER_LITER) {
-            setCountsPerLiter(countsPerLiter - STEP);
+          if (countsPerLiter + STEP <= MAX_COUNTS_PER_LITER) {
+            setCountsPerLiter(countsPerLiter + STEP);
             blinkFast(1);
           } else {
             blinkFast(3);
           }
         } else {
           // Decrement
-          if (countsPerLiter + STEP <= MAX_COUNTS_PER_LITER) {
-            setCountsPerLiter(countsPerLiter + STEP);
+          if (countsPerLiter - STEP >= MIN_COUNTS_PER_LITER) {
+            setCountsPerLiter(countsPerLiter - STEP);
             blinkFast(1);
           } else {
             blinkFast(3);
