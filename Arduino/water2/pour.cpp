@@ -1,9 +1,8 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include "hardware.h"
 #include "pour.h"
 
-// Sensor's scaling factor
-const double COUNTS_PER_LITER = 420;//381;//343;//450.0;
 // Expected flow rate liters per min
 const double EXPECTED_FLOW_RATE_LPM = 2.5;
 // If measured flow rate drops under this level, "low rate" error is triggered.
@@ -19,12 +18,33 @@ const unsigned int FLOW_RATE_CALCULATION_INTERVAL_MS = 150;
 // Flow will be measured over (this constant) times FLOW_RATE_CALCULATION_INTERVAL_MS ms.
 const int SIMULTANEOUS_MEASUREMENTS_COUNT = 10;
 
+int getCountsPerLiter() {
+  int result = 0;
+  EEPROM.get(0, result);
+  if ((result < MIN_COUNTS_PER_LITER) || (result > MAX_COUNTS_PER_LITER)) {
+    // Historical default values, newest to oldest: 420;//381;//343;//450;
+    return 420;
+  } else {
+    return result;
+  }
+}
+
+void setCountsPerLiter(int value) {
+  if (value < MIN_COUNTS_PER_LITER) {
+    value = MIN_COUNTS_PER_LITER;
+  } else if (value > MAX_COUNTS_PER_LITER) {
+    value = MAX_COUNTS_PER_LITER;
+  }
+  EEPROM.put(0, value);
+}
+
 TaskStatus pour(int valveIndex, double volumeLiters) {
   if ((volumeLiters <= 0) || (valveIndex < 0) || (valveIndex > 7)) {
     return TS_ERROR;
   }
 
-  unsigned int totalRequiredPulses = (unsigned int)round(volumeLiters * COUNTS_PER_LITER);
+  double countsPerLiter = (double)getCountsPerLiter();
+  unsigned int totalRequiredPulses = (unsigned int)round(volumeLiters * countsPerLiter);
   if (totalRequiredPulses == 0) {
     return TS_ERROR;
   }
@@ -82,7 +102,7 @@ TaskStatus pour(int valveIndex, double volumeLiters) {
 
         unsigned int prevCounter = prevCounters[dataIndex];
         if (prevCounter != 0xFFFF) { // there is data in current slot
-          double liters = ((double)(counterNow - prevCounter))/COUNTS_PER_LITER;
+          double liters = ((double)(counterNow - prevCounter))/countsPerLiter;
           double minutes = ((double)(timeNow - timeStamps[dataIndex]))/60000.0;
           if (liters / minutes < LOW_RATE_THRESHOLD_LPM) {
             result = TS_LOWRATE;

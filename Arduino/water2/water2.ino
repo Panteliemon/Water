@@ -14,7 +14,7 @@ void loop() {
   // Program selection
   if (getExtA()) {
     if (getExtB()) {
-      while (true) ;
+      calibration();
     } else {
       fillTubes();
     }
@@ -23,6 +23,9 @@ void loop() {
       while (true) ;
     } else {
       initNetwork();
+      Serial.print("Scaling factor: ");
+      Serial.print(getCountsPerLiter());
+      Serial.println(" L^-1");
       mainLoop();
     }
   }
@@ -60,10 +63,10 @@ void mainLoop() {
 void blinkFast(int numberOfTimes) {
   for (int i=0; i<numberOfTimes; i++) {
     if (i > 0) {
-      delay(80);
+      delay(89);
     }
     setExtLed(true);
-    delay(50);
+    delay(77);
     setExtLed(false);
   }
 }
@@ -90,76 +93,173 @@ void blinkSlow(int numberOfTimes) {
   }
 }
 
-void fillTubes() {
-  bool demandEStopDown = true;
+// Initiates sequence of user entering valve number:
+// - demand for press ESTOP with Ext LED constantly glowing
+// - beep-boop
+// - display Valve No entered by user
+int enterValveIndexUnderEStop() {
   while (true) {
-    if (demandEStopDown) {
+    if (!getEStop()) {
       setExtLed(true);
       waitForSet(I_ESTOP);
       setExtLed(false);
     }
 
-    // Valve selection while ESTOP pressed  
     int xPressedCount = 0;
+
     while (true) {
       InputsChange change = waitForChange(I_EXTX | I_ESTOP);
 
-      if ((change.changedInputs & I_EXTX) != 0) {
-        if ((change.inputsState & I_EXTX) != 0) {
-          if (xPressedCount < 8) {
-            xPressedCount++;
-            setExtLed(true);
-          } else {
-            blinkFast(3);
-          }
+      if (change.turnedOn(I_EXTX)) {
+        if (xPressedCount < 8) {
+          xPressedCount++;
+          blinkFast(1);
         } else {
-          setExtLed(false);
-        } 
+          blinkFast(3);
+        }
       }
 
-      if (((change.changedInputs & I_ESTOP) != 0) && ((change.inputsState & I_ESTOP) == 0)) {
+      if (change.turnedOff(I_ESTOP)) {
         break;
       }
     }
 
     setExtLed(false);
 
-    if (xPressedCount > 0) {
-      // Indicate
-      blinkMedium(xPressedCount);
-
-      while (true) {
-        InputsChange change = waitForChange(I_EXTX | I_ESTOP);
-
-        if ((change.changedInputs & I_EXTX) != 0) {
-          if ((change.inputsState & I_EXTX) != 0) {
-            enableValve(xPressedCount - 1);
-            enableMotor();
-          } else {
-            disableMotor();
-            delay(50);
-            disableValves();
-          } 
-        }
-
-        if (((change.changedInputs & I_ESTOP) != 0) && ((change.inputsState & I_ESTOP) != 0)) {
-          break;
-        }
-      }
-
-      if ((!getExtA()) || (getExtB())) {
-        // Program selector not at "fill tubes" position on EStop: exit to program selection
-        blinkSlow(3);
-        waitForReset(I_ESTOP);
-        delay(1000);
-        return;
-      }
-
-      // Back to valve selection
-      demandEStopDown = false;
+    if (xPressedCount == 0) {
+      blinkFast(3);
+      delay(200);
+      // Repeat over.
     } else {
-      // If valve's number not entered - send to the beginning
-      demandEStopDown = true;
+      // Display to the user
+      blinkMedium(xPressedCount);
+      return xPressedCount - 1;
+    }
+  }
+}
+
+void fillTubes() {
+  while (true) {
+    int valveIndex = enterValveIndexUnderEStop();
+
+    // Now X turns the motor+valve on/off, and ESTOP is "go to next valve"
+    while (true) {
+      InputsChange change = waitForChange(I_EXTX | I_ESTOP);
+
+      if (change.isChanged(I_EXTX)) {
+        if (change.isOn(I_EXTX)) {
+          enableValve(valveIndex);
+          enableMotor();
+        } else {
+          disableMotor();
+          delay(50);
+          disableValves();
+        } 
+      }
+
+      if (change.turnedOn(I_ESTOP)) {
+        disableMotor();
+        disableValves();
+        break;
+      }
+    }
+
+    if ((!getExtA()) || (getExtB())) {
+      // Program selector not at "fill tubes" position on EStop: exit to program selection
+      blinkSlow(3);
+      waitForReset(I_ESTOP);
+      delay(1000);
+      return;
+    }
+  }
+}
+
+void displayDigit(int digit) {
+  if (digit == 0) {
+    blinkSlow(1);
+  } else {
+    blinkFast(digit);
+  }
+}
+
+void calibration() {
+  // Input valve number
+  int valveIndex = -1;
+  bool valveConfirmed = false;
+  while (!valveConfirmed) {
+    valveIndex = enterValveIndexUnderEStop();
+
+    // Long X to confirm valve selection, ESTOP to re-enter
+
+    while (!valveConfirmed) {
+      InputsChange change = waitForChange(I_EXTX | I_ESTOP);
+      if (change.turnedOn(I_EXTX)) {
+        unsigned long pressedAt = millis();
+        while (getExtX()) {
+          unsigned long msNow = millis();
+          if (msNow - pressedAt >= 3000) {
+            valveConfirmed = true;
+            blinkFast(1);
+            waitForReset(I_EXTX);
+            break;
+          }
+        }
+      }
+
+      // ESTOP means select another valve
+      if ((!valveConfirmed) && change.turnedOn(I_ESTOP)) {
+        break;
+      }
+    }
+  }
+
+  bool pourOnEStopRelease = true;
+  while (true) {
+    InputsChange change = waitForChange(I_EXTX | I_ESTOP);
+
+    // X only works when no EStop
+    if (change.turnedOn(I_EXTX) && (!getEStop())) {
+      int countsPerLiter = getCountsPerLiter();
+      if (getExtA()) {
+        // Display
+        displayDigit((countsPerLiter / 100) % 10);
+        delay(1000);
+        displayDigit((countsPerLiter / 10) % 10);
+        delay(1000);
+        displayDigit(countsPerLiter % 10);
+      } else {
+        // Edit
+        const int STEP = 5;
+        if (getExtB()) {
+          // Increment
+          if (countsPerLiter - STEP >= MIN_COUNTS_PER_LITER) {
+            setCountsPerLiter(countsPerLiter - STEP);
+            blinkFast(1);
+          } else {
+            blinkFast(3);
+          }
+        } else {
+          // Decrement
+          if (countsPerLiter + STEP <= MAX_COUNTS_PER_LITER) {
+            setCountsPerLiter(countsPerLiter + STEP);
+            blinkFast(1);
+          } else {
+            blinkFast(3);
+          }
+        }
+      }
+    }
+
+    if (change.turnedOff(I_ESTOP)) {
+      if (pourOnEStopRelease) {
+        if (!getExtX()) { // manual override
+          pour(valveIndex, 0.5);
+        }
+        pourOnEStopRelease = !getEStop();
+      } else {
+        // Next time.
+        pourOnEStopRelease = true;
+      }
     }
   }
 }

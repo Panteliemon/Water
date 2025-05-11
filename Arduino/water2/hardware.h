@@ -32,7 +32,12 @@ InputMask waitForReset(InputMask inputsToWait);
 struct InputsChange {
   InputMask changedInputs;
   InputMask inputsState;
-}
+
+  bool isChanged(InputMask inputs) { return (inputs & changedInputs) != 0; }
+  bool isOn(InputMask inputs) { return (inputs & inputsState) != 0; }
+  bool turnedOn(InputMask inputs) { return (inputs & inputsState & changedInputs) != 0; }
+  bool turnedOff(InputMask inputs) { return (inputs & (~inputsState) & changedInputs) != 0; }
+};
 // Waits until any of specified inputs changes its state compared to right now (when the func was just called)
 InputsChange waitForChange(InputMask inputsToWait);
 
