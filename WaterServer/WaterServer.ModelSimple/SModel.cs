@@ -16,7 +16,16 @@ public class SModel
     /// In this list tasks' plants belong by reference to the <see cref="Plants"/> 
     /// </summary>
     public List<STask> Tasks { get; set; }
+    /// <summary>
+    /// Dun't putt ALL task requests here, put only those which changed state.
+    /// Otherwise it will be bloated as hell.
+    /// </summary>
     public List<SClientActivityRec> ClientActivities { get; set; }
+    public SClientActivityRec LastClientActivity { get; set; }
+    /// <summary>
+    /// Last CPR reported by the client
+    /// </summary>
+    public int? LastCountsPerLiter { get; set; }
 
     public static SModel Empty()
     {
@@ -50,6 +59,7 @@ public class SModel
         }
 
         result.ClientActivities = ClientActivities?.Select(x => x.Clone()).ToList();
+        result.LastClientActivity = LastClientActivity?.Clone();
 
         return result;
     }
@@ -67,5 +77,36 @@ public class SModel
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Get task which most desperately needs execution at given moment of time.
+    /// Null if there are no such tasks.
+    /// </summary>
+    /// <param name="utcDateTime">Must have utc kind (this method doesn't check)</param>
+    /// <returns></returns>
+    public STask GetTaskForExecution(DateTime utcDateTime)
+    {
+        if (Tasks == null)
+            return null;
+
+        List<STask> candidates = Tasks.Where(
+            t => (t.UtcValidFrom <= utcDateTime) && (utcDateTime < t.UtcValidTo)
+                 && t.HasItemsToExecute()
+            ).ToList();
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+        else if (candidates.Count == 1)
+        {
+            return candidates[0];
+        }
+        else
+        {
+            candidates.Sort((t1, t2) => STask.CompareByExecutionOrder(t1, t2, utcDateTime));
+            return candidates[0];
+        }
     }
 }

@@ -16,4 +16,6 @@ public class RootDto
     public List<TaskDto> Tasks { get; set; }
     [XmlArrayItem(ElementName = "ClientActivity")]
     public List<ClientActivityDto> ClientActivities { get; set; }
+    public ClientActivityDto LastClientActivity { get; set; }
+    public string LastCountsPerLiter { get; set; } // Nullable<int> ugly when serialized as null
 }

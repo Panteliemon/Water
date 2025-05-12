@@ -114,18 +114,16 @@ internal class Program
                 {
                     ExecuteViewTaskList(cmd.Parameters);
                 }
-                else if (cmd.NameLower == "status")
-                {
-
-                }
                 else if (cmd.NameLower == "nt")
                 {
                     ExecuteAddTask(cmd.Parameters);
                 }
+#if DEBUG
                 else if (cmd.NameLower == "fail")
                 {
                     throw new Exception("NOOOOOOOOO!!!");
                 }
+#endif
                 else
                 {
                     InColor(WARNING, () =>
@@ -173,8 +171,274 @@ internal class Program
     {
         InColor(INFO, () =>
         {
-            Console.WriteLine("TODO...");
+            Console.WriteLine("---------------------------------");
+            Console.WriteLine("Waterer 2.0 Control Console: Help");
+            Console.WriteLine("---------------------------------");
+            Console.WriteLine("Conventions:");
+            InColor(USERINPUT, "  this color");
+            Console.WriteLine(" - exact user input");
+            Console.Write("  ");
+            PrintInFormatBraces("textInBraces", USERINPUT);
+            Console.WriteLine(" - user input which adheres to specific format. '{' '}' symbols are not typed.");
+
+            Console.WriteLine();
+            Console.WriteLine("COMMANDS");
+            Console.WriteLine("  All commands are case-insensitive");
+            Console.WriteLine();
+            Console.WriteLine("General:");
+
+            InColorLn(USERINPUT, "  q");
+            InColorLn(USERINPUT, "  exit");
+            Console.WriteLine("    Exit from program");
+            Console.WriteLine();
+
+            InColorLn(USERINPUT, "  pull");
+            InColorLn(USERINPUT, "  reload");
+            Console.WriteLine("    Load actual data from server");
+            Console.WriteLine();
+
+            InColorLn(USERINPUT, "  cls");
+            Console.WriteLine("    Clear the console");
+            
+            Console.WriteLine();
+            PressAnyKey();
+            Console.WriteLine();
+
+            Console.WriteLine("Plants:");
+            InColorLn(USERINPUT, "  pl");
+            InColorLn(USERINPUT, "  plants");
+            InColor(USERINPUT, "  pl ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "  plants ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Displays list of plants.");
+            Console.Write("    ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine(" - single or several additional characters. Only one flag is supported for plants:");
+            InColor(USERINPUT, "      x");
+            Console.WriteLine(" - display as xml. Keep in mind that values stored in xml can be by design different");
+            Console.WriteLine("          from user-friendly values displayed in UIs.");
+
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  add plant");
+            InColorLn(USERINPUT, "  new plant");
+            Console.WriteLine("    Initiates adding new plant. The program will guide you through the steps.");
+
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  edit plant");
+            InColorLn(USERINPUT, "  update plant");
+            InColor(USERINPUT, "  edit plant ");
+            PrintInFormatBraces("valveNo", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "  update plant ");
+            PrintInFormatBraces("valveNo", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Edit existing plant. The program will guide you through the steps.");
+            Console.Write("    ");
+            PrintInFormatBraces("valveNo", USERINPUT);
+            Console.WriteLine(" - integer Valve Number of the plant. If not provided - the program will ask for it.");
+
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  delete plant");
+            InColor(USERINPUT, "  delete plant ");
+            PrintInFormatBraces("valveNo", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Delete existing plant.");
+            Console.Write("    ");
+            PrintInFormatBraces("valveNo", USERINPUT);
+            Console.WriteLine(" - integer Valve Number of the plant. If not provided - the program will ask for it.");
+
+            Console.WriteLine();
+            PressAnyKey();
+            Console.WriteLine();
+
+            Console.WriteLine("Tasks:");
+            InColorLn(USERINPUT, "  ts");
+            InColorLn(USERINPUT, "  tasks");
+            InColor(USERINPUT, "  ts ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "  tasks ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Displays list of task. By default displays only tasks relevant for today and future tasks.");
+            Console.Write("    ");
+            PrintInFormatBraces("flags", USERINPUT);
+            Console.WriteLine(" - single or several additional characters, either all concatenated, or all separated by space.");
+            Console.WriteLine("              Supported flags:");
+            InColor(USERINPUT, "      a");
+            Console.WriteLine(" - display all tasks from server, including archived tasks.");
+            InColor(USERINPUT, "      p");
+            Console.WriteLine(" - use pagination for long outputs.");
+            InColor(USERINPUT, "      x");
+            Console.WriteLine(" - display as xml. Keep in mind that values stored in xml can be by design different");
+            Console.WriteLine("          from user-friendly values displayed in UIs.");
+
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  add task");
+            InColor(USERINPUT, "  add task ");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  new task");
+            InColor(USERINPUT, "  new task ");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  nt");
+            InColor(USERINPUT, "  nt ");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Initiates adding new task. Switches to Edit Task mode, which has its separate set of instructions,");
+            Console.WriteLine("    different from those available on root level and described here. The program will provide you the info.");
+            Console.Write("    ");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.WriteLine(" - date-time range for the future task, exact syntax is covered on the next page.");
+            Console.WriteLine("                  If not provided, program will ask you for task's dates.");
+
+            Console.WriteLine();
+            PressAnyKey();
+            Console.WriteLine();
+
+            InColorLn(USERINPUT, "  edit task");
+            InColorLn(USERINPUT, "  update task");
+            InColor(USERINPUT, "  edit task ");
+            PrintInFormatBraces("taskId", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "  update task ");
+            PrintInFormatBraces("taskId", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Edit existing task. Switches to Edit Task mode, which has its separate set of instructions,");
+            Console.WriteLine("    different from those available on root level and described here. The program will provide you the info.");
+            Console.Write("    ");
+            PrintInFormatBraces("taskId", USERINPUT);
+            Console.WriteLine(" - ID of the task. If not specified, the program will ask you for task's ID.");
+
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  delete task");
+            InColor(USERINPUT, "  delete task ");
+            PrintInFormatBraces("taskId", USERINPUT);
+            Console.WriteLine();
+            Console.WriteLine("    Delete existing task.");
+            Console.Write("    ");
+            PrintInFormatBraces("taskId", USERINPUT);
+            Console.WriteLine(" - ID of the task. If not specified, the program will ask you for task's ID.");
+
+            Console.WriteLine();
+            Console.Write("TASK DATES (");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.WriteLine(") SYNTAX");
+            Console.Write("  ");
+            PrintInFormatBraces("taskDates", USERINPUT);
+            Console.Write(" ::= ");
+            PrintInFormatBraces("wholeDayFmt", USERINPUT);
+            Console.Write(" | ");
+            PrintInFormatBraces("rangeFmt", USERINPUT);
+            Console.WriteLine();
+
+            Console.WriteLine();
+            Console.Write("  ");
+            PrintInFormatBraces("wholeDayFmt", USERINPUT);
+            Console.WriteLine(" is for the tasks which are supposed to be valid within the whole calendar day regardless of time.");
+            Console.WriteLine("  This term can have one of the following values:");
+            InColor(USERINPUT, "    a");
+            Console.WriteLine(" - shorthand for \'tomorrow\'");
+            InColor(USERINPUT, "    b");
+            Console.WriteLine(" - shorthand for \'today\'");
+            Console.Write("    ");
+            PrintInFormatBraces("dd/MM", USERINPUT);
+            Console.WriteLine(" - specific date within current year");
+            Console.Write("    ");
+            PrintInFormatBraces("dd/MM/yy", USERINPUT);
+            Console.WriteLine(" - specific date, 2-digit year format");
+            Console.Write("    ");
+            PrintInFormatBraces("dd/MM/yyyy", USERINPUT);
+            Console.WriteLine(" - specific date, 4-digit year format");
+            Console.Write("  Examples: ");
+            InColor(USERINPUT, "nt a");
+            Console.WriteLine(" - add whole-day task for \'tomorrow\'.");
+            InColor(USERINPUT, "            add task 15/5");
+            Console.WriteLine(" - add whole-day task for May 15th of current year.");
+
+            Console.WriteLine();
+            PressAnyKey();
+            Console.WriteLine();
+
+            Console.Write("  ");
+            PrintInFormatBraces("rangeFmt", USERINPUT);
+            Console.WriteLine(" specifies exact start and end time.");
+            Console.WriteLine("  Possible values:");
+            InColor(USERINPUT, "    a ");
+            PrintInFormatBraces("time", USERINPUT);
+            InColor(USERINPUT, "-");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "    b ");
+            PrintInFormatBraces("time", USERINPUT);
+            InColor(USERINPUT, "-");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.WriteLine();
+            Console.Write("    ");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("time", USERINPUT);
+            InColor(USERINPUT, "-");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.WriteLine();
+            Console.Write("    ");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("time", USERINPUT);
+            InColor(USERINPUT, "-");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.WriteLine();
+
+            Console.Write("  Here ");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.Write(" is either ");
+            PrintInFormatBraces("dd/MM", USERINPUT);
+            Console.Write(", ");
+            PrintInFormatBraces("dd/MM/yy", USERINPUT);
+            Console.Write(" or ");
+            PrintInFormatBraces("dd/MM/yyyy", USERINPUT);
+            Console.Write("; ");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.Write(" is either ");
+            PrintInFormatBraces("hh:mm", USERINPUT);
+            Console.Write(" or ");
+            PrintInFormatBraces("hh", USERINPUT);
+            Console.WriteLine(",");
+
+            Console.Write("  and ");
+            InColor(USERINPUT, "a");
+            Console.Write(" and ");
+            InColor(USERINPUT, "b");
+            Console.WriteLine(" are shorthands for \'tomorrow\' and \'today\' respectively.");
+            Console.WriteLine("  Seconds are not supported. Hours are in 24h format.");
+
+            Console.Write("  Examples: ");
+            InColor(USERINPUT, "nt a 9-13");
+            Console.WriteLine(" - add task valid from tomorrow 9:00 am till tomorrow 1:00 pm.");
+            InColor(USERINPUT, "            nt 15/5/25 8 - 16/5/2025 5:59");
+            Console.WriteLine(" - add task valid from May 15 2025 8:00 till May 16 2025 5:59.");
+
+            Console.WriteLine();
+            Console.WriteLine("Colors:");
+            InColorLn(INFO, "  info");
+            InColorLn(USERINPUT, "  user input");
+            InColorLn(REQUEST, "  indicates that specific input is required, and root-level commands are not supported");
+            InColorLn(WARNING, "  warning");
+            InColorLn(ERROR, "  error");
         });
+    }
+
+    static void PressAnyKey()
+    {
+        Console.Write("=====    Press any key...   =====");
+        Console.ReadKey();
+        Console.WriteLine();
     }
 
     #region Commands
@@ -597,7 +861,7 @@ internal class Program
 
             Console.Write("  ");
             InColor(USERINPUT, "d ");
-            PrintInFormatBraces("taskDatesFormat", USERINPUT);
+            PrintInFormatBraces("taskDates", USERINPUT);
             Console.WriteLine();
 
             Console.Write("  ");
@@ -848,9 +1112,7 @@ internal class Program
                 {
                     if ((i > 5) && ((i + 2) % pgSize == 0)) // with shift by 2 it splits at separator
                     {
-                        Console.Write("=====    Press any key...   =====");
-                        Console.ReadKey();
-                        Console.WriteLine();
+                        PressAnyKey();
                     }
 
                     Console.WriteLine(lines[i]);

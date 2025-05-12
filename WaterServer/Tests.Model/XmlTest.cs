@@ -57,6 +57,11 @@ public class XmlTest
             ActivityType = SClientActivityType.TaskComplete,
             UtcTimeStamp = new DateTime(2025, 4, 30, 12, 11, 27, DateTimeKind.Utc),
         });
+        model.LastClientActivity = new SClientActivityRec()
+        {
+            ActivityType = SClientActivityType.TaskRequest,
+            UtcTimeStamp = new DateTime(2025, 5, 7, 23, 20, 0, DateTimeKind.Utc)
+        };
 
         // Act
         string str = ModelXml.RootToStr(model);
@@ -84,6 +89,10 @@ public class XmlTest
 
         Assert.Equal(SClientActivityType.TaskComplete, model2.ClientActivities[0].ActivityType);
         Assert.Equal(new DateTime(2025, 4, 30, 12, 11, 27, DateTimeKind.Utc), model2.ClientActivities[0].UtcTimeStamp);
+
+        Assert.NotNull(model2.LastClientActivity);
+        Assert.Equal(SClientActivityType.TaskRequest, model2.LastClientActivity.ActivityType);
+        Assert.Equal(new DateTime(2025, 5, 7, 23, 20, 0, DateTimeKind.Utc), model2.LastClientActivity.UtcTimeStamp);
     }
 
     [Fact]

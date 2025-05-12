@@ -14,6 +14,7 @@ namespace WaterConsole;
 internal class Connector
 {
     private string serverDomain;
+    private HttpClientHandler httpClientsHandler;
     private HttpClient httpClientPublic;
     private HttpClient httpClientPrivate;
     private string apiKey;
@@ -29,13 +30,18 @@ internal class Connector
             serverDomain = configuration["WaterServerDomain:Release"];
         }
 
-        httpClientPublic = new HttpClient()
+        httpClientsHandler = new HttpClientHandler()
+        {
+            ServerCertificateCustomValidationCallback = (a, b, c, d) => true
+        };
+
+        httpClientPublic = new HttpClient(httpClientsHandler)
         {
             BaseAddress = new Uri($"https://{serverDomain}"),
         };
 
         apiKey = File.ReadAllText(Path.Combine(configuration["SecretsPath"], "apikey-console.txt"));
-        httpClientPrivate = new HttpClient()
+        httpClientPrivate = new HttpClient(httpClientsHandler)
         {
             BaseAddress = new Uri($"https://{serverDomain}"),
         };

@@ -14,6 +14,11 @@ public class STaskItem
     public int VolumeMl { get; set; }
     public STaskStatus Status { get; set; }
 
+    public bool IsReadyForExecution()
+    {
+        return (Status == STaskStatus.NotStarted) && (VolumeMl > 0) && (Plant != null);
+    }
+
     /// <summary>
     /// Doesn't change link to plant!
     /// </summary>
