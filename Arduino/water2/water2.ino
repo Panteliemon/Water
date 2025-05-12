@@ -226,6 +226,7 @@ void calibration() {
       int countsPerLiter = getCountsPerLiter();
       if (getExtA()) {
         // Display
+        delay(250); // (time to move hand away from the LED)
         displayDigit((countsPerLiter / 100) % 10);
         delay(1000);
         displayDigit((countsPerLiter / 10) % 10);

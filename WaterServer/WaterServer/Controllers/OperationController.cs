@@ -25,9 +25,10 @@ public class OperationController : ControllerBase
     }
 
     [HttpPost("/operation/nexttask")]
-    public Task<string> NextTask()
+    public async Task<string> NextTask()
     {
-        return criticalSection.Execute<string>(async () =>
+        string requestStr = await Request.ReadBodyAsString();
+        return await criticalSection.Execute<string>(async () =>
         {
             SModel model = await repository.ReadAll();
             model ??= SModel.Empty();
@@ -39,6 +40,15 @@ public class OperationController : ControllerBase
                 UtcTimeStamp = utcNow
             };
             model.LastClientActivity = activityRec;
+
+            if (ClientInfo.TryParse(requestStr, out ClientInfo clientInfo))
+            {
+                model.LastCountsPerLiter = clientInfo.CountsPerLiter;
+            }
+            else
+            {
+                model.LastCountsPerLiter = null;
+            }
 
             STask task = model.GetTaskForExecution(utcNow);
             if (task == null)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using WaterServer.ModelSimple;
+using WaterServer.Utils;
 
 namespace WaterServer.Models;
 
@@ -38,7 +39,7 @@ public class ClientTaskResult
                 if (pos + 1 < requestStr.Length)
                 {
                     pos++;
-                    if (!ReadPositiveInteger(requestStr, ref pos, out int parsedTaskId))
+                    if (!Parse.ReadPositiveInteger(requestStr, ref pos, out int parsedTaskId))
                         return false;
 
                     taskId = parsedTaskId;
@@ -90,7 +91,7 @@ public class ClientTaskResult
         if (pos + 1 < str.Length)
         {
             pos++;
-            if (!ReadPositiveInteger(str, ref pos, out int parsedIndex))
+            if (!Parse.ReadPositiveInteger(str, ref pos, out int parsedIndex))
                 return false;
             if (parsedIndex > SPlant.MAX_INDEX)
                 return false;
@@ -111,7 +112,7 @@ public class ClientTaskResult
                         if (pos + 1 < str.Length)
                         {
                             pos++;
-                            if (!ReadPositiveInteger(str, ref pos, out int parsedStatusInt))
+                            if (!Parse.ReadPositiveInteger(str, ref pos, out int parsedStatusInt))
                                 return false;
 
                             STaskStatus taskStatusValue = (STaskStatus)parsedStatusInt;
@@ -131,9 +132,9 @@ public class ClientTaskResult
                             return false;
                         }
                     }
-                    else if ((c == 'I') || (c == 'T'))
+                    else
                     {
-                        // Exit by encountering root-level control character.
+                        // Exit by encountering root-level control character or this level character that we don't know.
                         // Move back (according to spec)
                         pos--;
 
@@ -146,11 +147,6 @@ public class ClientTaskResult
                         {
                             return false;
                         }
-                    }
-                    else
-                    {
-                        // Skip until known control character
-                        pos++;
                     }
                 }
 
@@ -176,52 +172,6 @@ public class ClientTaskResult
         {
             // Need plant index after 'I'
             return false;
-        }
-    }
-
-    /// <summary>
-    /// Read the subj from the substring
-    /// </summary>
-    /// <param name="str"></param>
-    /// <param name="pos">Must be within range always.
-    /// Initial position: where the first digit of an integer is supposed to be.
-    /// Final position if success: on the last digit of the integer.
-    /// Final position if failed: not defined.</param>
-    /// <param name="value"></param>
-    /// <returns>True if parsed succesfully</returns>
-    private static bool ReadPositiveInteger(string str, ref int pos, out int value)
-    {
-        value = str[pos] - '0';
-        if ((value > 9) || (value < 0))
-            return false;
-
-        while (true)
-        {
-            int nextPos = pos + 1;
-            if (nextPos < str.Length)
-            {
-                char nextChar = str[nextPos];
-                if ((nextChar >= '0') && (nextChar <= '9'))
-                {
-                    // 2147483647
-                    if (value > 214748364)
-                        return false;
-                    int digit = nextChar - '0';
-                    if ((value == 214748364) && (digit > 7))
-                        return false;
-
-                    value = value * 10 + digit;
-                    pos = nextPos;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                return true;
-            }
         }
     }
 }

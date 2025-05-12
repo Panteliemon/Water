@@ -22,6 +22,10 @@ public class SModel
     /// </summary>
     public List<SClientActivityRec> ClientActivities { get; set; }
     public SClientActivityRec LastClientActivity { get; set; }
+    /// <summary>
+    /// Last CPR reported by the client
+    /// </summary>
+    public int? LastCountsPerLiter { get; set; }
 
     public static SModel Empty()
     {

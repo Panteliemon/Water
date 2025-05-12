@@ -17,4 +17,5 @@ public class RootDto
     [XmlArrayItem(ElementName = "ClientActivity")]
     public List<ClientActivityDto> ClientActivities { get; set; }
     public ClientActivityDto LastClientActivity { get; set; }
+    public int? LastCountsPerLiter { get; set; }
 }

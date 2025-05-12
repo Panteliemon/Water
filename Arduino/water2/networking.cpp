@@ -7,6 +7,7 @@
 #include "D:\Bn\Src\Water_Secrets\apikey-orduino.h"
 #include "Buffer.h"
 #include "ResponseReader.h"
+#include "pour.h"
 
 const char *ssid = WIFI_SSID;
 const char *pass = WIFI_PASS;
@@ -203,6 +204,11 @@ int tryGetNextTask_badResponseCounter = 0;
 bool tryGetNextTask(Task &t) {
   requestBuffer.setLength(0);
   responseBuffer.setLength(0);
+
+  // Some info about ourselves
+  requestBuffer.writeChar('C');
+  requestBuffer.writeDecimalInt(getCountsPerLiter());
+
   HttpStatus httpStatus = sendPostRequest("/operation/nexttask", requestBuffer, &responseBuffer);
   if (httpStatus == HS_OK) {
     tryGetNextTask_badResponseCounter = 0;
