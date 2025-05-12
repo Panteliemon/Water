@@ -116,7 +116,7 @@ public static class ModelXml
             Tasks = model.Tasks?.Select(x => TaskToDto(x)).ToList(),
             ClientActivities = model.ClientActivities?.Select(x => CAToDto(x)).ToList(),
             LastClientActivity = (model.LastClientActivity == null) ? null : CAToDto(model.LastClientActivity),
-            LastCountsPerLiter = model.LastCountsPerLiter
+            LastCountsPerLiter = model.LastCountsPerLiter.HasValue ? model.LastCountsPerLiter.Value.ToString() : null
         };
 
         return result;
@@ -221,7 +221,11 @@ public static class ModelXml
             result.LastClientActivity = DtoToCA(dto.LastClientActivity);
         }
 
-        result.LastCountsPerLiter = dto.LastCountsPerLiter;
+        if ((dto.LastCountsPerLiter != null)
+            && int.TryParse(dto.LastCountsPerLiter, out int parsedCPR))
+        {
+            result.LastCountsPerLiter = parsedCPR;
+        }
 
         return result;
     }
