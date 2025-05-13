@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using WaterServer.ModelSimple;
+using WaterServer.ViewModels;
 using WaterServer.Xml;
 
 namespace WaterServer.Controllers;
@@ -22,5 +26,47 @@ public class StatusController : ControllerBase
         // Don't return empty string from API endpoint
         model ??= SModel.Empty();
         return ModelXml.RootToStr(model);
+    }
+
+    [HttpGet("/tasks")]
+    public async Task<List<TaskRowVm>> GetTaskRows(DateTime? todayStart)
+    {
+        SModel model = await repository.ReadAll();
+
+        IEnumerable<STask> filteredTasks = todayStart.HasValue
+            ? model.Tasks.Where(t => t.UtcValidTo > todayStart.Value)
+            : model.Tasks;
+
+        List<TaskRowVm> result = filteredTasks.Select(t => new TaskRowVm()
+        {
+            TaskId = t.Id,
+            UtcValidFrom = t.UtcValidFrom,
+            UtcValidTo = t.UtcValidTo,
+            Cells = model.Plants.OrderBy(p => p.Index).Select(p => CreateCellVm(t, p)).ToList()
+        }).ToList();
+
+        result.Sort(TaskRowVm.CompareForSorting);
+        return result;
+    }
+
+    private static TaskCellVm CreateCellVm(STask task, SPlant plant)
+    {
+        STaskItem taskItem = task.Items.FirstOrDefault(item => item.Plant == plant);
+        if (taskItem == null)
+        {
+            return new TaskCellVm()
+            {
+                ContainsData = false
+            };
+        }
+        else
+        {
+            return new TaskCellVm()
+            {
+                ContainsData = true,
+                Status = taskItem.Status,
+                VolumeMl = taskItem.VolumeMl
+            };
+        }
     }
 }

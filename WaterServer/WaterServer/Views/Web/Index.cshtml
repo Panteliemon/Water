@@ -1,0 +1,182 @@
+﻿@model WaterServer.ViewModels.IndexVm
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <h1>Tasks List</h1>
+}
+else
+{
+  <h1>Uzdevumu saraksts</h1>
+}
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      @for (int i = 0; i < Model.Plants.Count; i++)
+      {
+        <th>
+          @Model.Plants[i].ValveNo
+        </th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    <!-- No data in page's html, sorry for that. Need to know your local timezone to select and display properly. -->
+    <!-- ko foreach: viewModel.tableRows -->
+    <tr>
+      <td>
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <p>
+            <span>Task </span>
+            <span data-bind="text: taskId"></span>
+          </p>
+          <p data-bind="visible: isValidVisible">Valid:</p>
+          <p data-bind="visible: isValidFromVisible">Valid from:</p>
+          <p data-bind="text: fromStr"></p>
+          <p data-bind="visible: isValidToVisible">Valid to:</p>
+          <p data-bind="visible: isValidToDayVisible">Valid to (included):</p>
+          <p data-bind="visible: toStr">
+            <span data-bind="text: toStr"></span>
+            <span data-bind="visible: isSameDayVisible"> same day</span>
+          </p>
+        }
+        else
+        {
+          <p>
+            <span>Uzdevums </span>
+            <span data-bind="text: taskId"></span>
+          </p>
+          <p data-bind="visible: isValidVisible">Derīgs:</p>
+          <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
+          <p data-bind="text: fromStr"></p>
+          <p data-bind="visible: isValidToVisible">Derīgs līdz:</p>
+          <p data-bind="visible: isValidToDayVisible">Derīgs līdz (ieskaitot):</p>
+          <p data-bind="visible: toStr">
+            <span data-bind="text: toStr"></span>
+            <span data-bind="visible: isSameDayVisible"> tajā pašā dienā</span>
+          </p>
+        }
+      </td>
+      <!-- ko foreach: cells -->
+      <td>
+        <p data-bind="visible: containsData">
+          <span data-bind="text: volumeMl"></span>
+          <span> ml</span>
+        </p>
+        <p data-bind="visible: containsData, text: statusToStr(status)">
+        </p>
+      </td>
+      <!-- /ko -->
+    </tr>
+    <!-- /ko -->
+  </tbody>
+</table>
+
+<script>
+  let viewModel = {
+    tableRows: ko.observable([])
+  };
+
+  ko.applyBindings(viewModel);
+</script>
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <script>
+    function statusToStr(status) {
+      switch (status) {
+        case 0: return "Not Started";
+        case 1: return "In Progress";
+        case 2: return "Success";
+        case 10: return "Low Rate";
+        case 11: return "No Counter";
+        case 99: return "ERROR";
+        default: return "Unknown";
+      }
+    }
+  </script>
+}
+else
+{
+  <script>
+    function statusToStr(status) {
+      switch (status) {
+        case 0: return "Nav sākts";
+        case 1: return "Notiek";
+        case 2: return "Veiksmīgs";
+        case 10: return "Zems ātrums";
+        case 11: return "Nav skaitītāja";
+        case 99: return "KĻŪDA";
+        default: return "Nezināms";
+      }
+    }
+  </script>
+}
+
+<script> 
+  document.addEventListener("DOMContentLoaded", async () => {
+    let localTodayBegin = new Date();
+    localTodayBegin.setHours(0, 0, 0, 0);
+
+    let response = await fetch("tasks?" + new URLSearchParams({
+      todayStart: localTodayBegin.toJSON()
+    }));
+
+    if (response.ok) {
+      let rows = await response.json();
+      
+      for (let row of rows) {
+        row.isValidVisible = false;
+        row.isValidFromVisible = false;
+        row.isValidToVisible = false;
+        row.isValidToDayVisible = false;
+        row.isSameDayVisible = false;
+        row.toStr = null;
+
+        let validFrom, validTo;
+        if (tryParseDate(row.utcValidFrom, d => { validFrom = d; })
+            && tryParseDate(row.utcValidTo, d => { validTo = d; })) {
+          if ((validFrom.getHours() == 0) && (validFrom.getMinutes() == 0)
+              && (validTo.getHours() == 0) && (validTo.getMinutes() == 0)) {
+            if (validTo.getTime() == validFrom.getTime() + 1000 * 3600 * 24) {
+              row.fromStr = validFrom.toLocaleDateString();
+              row.isValidVisible = true;
+            } else {
+              row.fromStr = validFrom.toLocaleDateString();
+              row.toStr = new Date(validTo.getTime() - 1000 * 3600 * 24).toLocaleDateString();
+              row.isValidFromVisible = true;
+              row.isValidToDayVisible = true;
+            }
+          } else {
+            if ((validFrom.getFullYear() == validTo.getFullYear()) && (validFrom.getMonth() == validTo.getMonth()) && (validFrom.getDate() == validTo.getDate())) {
+              row.fromStr = validFrom.toLocaleString();
+              row.toStr = validTo.toLocaleTimeString();
+              row.isValidFromVisible = true;
+              row.isValidToVisible = true;
+              row.isSameDayVisible = true;
+            } else {
+              row.fromStr = validFrom.toLocaleString();
+              row.toStr = validTo.toLocaleString();
+              row.isValidFromVisible = true;
+              row.isValidToVisible = true;
+            }
+          }
+        } else {
+          row.fromStr = row.utcValidFrom;
+          row.toStr = row.utcValidTo;
+          row.isValidFromVisible = true;
+          row.isValidToVisible = true;
+        }
+      }
+      viewModel.tableRows(rows);
+    } else {
+      // TODO
+    }
+  });
+</script>
+
+@{
+  Layout = "Layout";
+}

@@ -45,7 +45,8 @@ public class Program
         WebApplication app = builder.Build();
         // To load parameters and display possible warnings immediately
         app.Services.GetRequiredService<IWaterConfig>();
-
+        
+        app.UseStaticFiles();
         app.AddCustomAuthenticator();
         app.MapControllers();
         app.AddSimpleAuthorizator();
@@ -56,7 +57,7 @@ public class Program
 
     private static void AddServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllersWithViews();
         services.AddSingleton<IWaterConfig, WaterConfig>();
         services.AddSingleton<ICriticalSection, CriticalSection>();
     }

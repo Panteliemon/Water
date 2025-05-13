@@ -1,0 +1,84 @@
+﻿:root {
+  --background: #102050;
+  --text: #F5F0F6;
+  --tab-bg: #1A70C7;
+  --inactive-tab-bg: #484858;
+  --headers: #73DC2E;
+  --step: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  margin: 0;
+  font-family: Roboto, Arial, sans-serif;
+}
+
+section.main {
+  margin: 0 var(--step) var(--step) var(--step);
+  background: var(--tab-bg);
+  overflow: auto;
+  padding: var(--step);
+}
+
+nav {
+  margin: var(--step) var(--step) 0 var(--step);
+}
+
+nav::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+nav > div.links {
+  float: left;
+}
+
+nav > div.languages {
+  float: right;
+}
+
+nav a {
+  display: inline-block;
+  color: var(--text);
+  padding: var(--step);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+nav > div.links a {
+  margin: 0 var(--step) 0 0;
+}
+nav > div.languages a {
+  margin: 0 0 0 var(--step);
+  width: 42px;
+  text-align: center;
+}
+
+nav a:link, nav a:visited {
+  display: inline-block;
+  background: var(--inactive-tab-bg);
+}
+nav a.selected:link, nav a.selected:visited {
+  display: inline-block;
+  background: var(--tab-bg);
+}
+
+nav a:hover {
+  display: inline-block;
+  background: var(--tab-bg);
+}
+
+nav a:active {
+  display: inline-block;
+  background: var(--tab-bg);
+}
+
+h1, h2, h3 {
+  color: var(--headers);
+}
