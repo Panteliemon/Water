@@ -11,7 +11,7 @@ else
 
 <input id="hShowAllTasks" hidden value="@(Model.ShowAllTasks ? 1 : 0)" />
 
-<div id="swShowAllTasks" class="switcher">
+<div id="swShowAllTasks" class="switcher margin-top">
   <button class="@(Model.ShowAllTasks ? "" : "selected")">
     @if ((string)ViewData["Lang"] == "EN")
     {
@@ -33,15 +33,64 @@ else
   </button>
 </div>
 
-<table>
+<div id="loaderDiv" class="loader margin-top">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Loading...</text>
+  }
+  else
+  {
+    <text>Ielāde...</text>
+  }
+</div>
+<div id="errorDiv" class="error margin-top" style="display:none;">
+  <span>[x]</span>
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Error, data not retrieved :(</text>
+  }
+  else
+  {
+    <text>Kļūda, dati nav saņemti :(</text>
+  }
+</div>
+<div id="noActiveRecordsDiv" class="no-records margin-top" style="display:none;">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>No active tasks :)</text>
+  }
+  else
+  {
+    <text>Aktīvo uzdevumu nav :)</text>
+  }
+</div>
+<div id="noRecordsDiv" class="no-records margin-top" style="display:none;">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>No tasks at all! :)</text>
+  }
+  else
+  {
+    <text>Uzdevumu nu vispār nav! :)</text>
+  }
+</div>
+
+<table id="mainTable" style="display:none;" class="margin-top">
   <thead>
     <tr>
-      <th></th>
-      <th></th>
+      <th>№</th>
+      @if ((string)ViewData["Lang"] == "EN")
+      {
+        <th>Time Range</th>
+      }
+      else
+      {
+        <th>Laika posms</th>
+      }
       @for (int i = 0; i < Model.Plants.Count; i++)
       {
         <th>
-          @Model.Plants[i].ValveNo
+          <p class="plant-no">@Model.Plants[i].ValveNo</p>
         </th>
       }
     </tr>
@@ -51,18 +100,18 @@ else
     <!-- ko foreach: viewModel.tableRows -->
     <tr>
       <td>
-        <p data-bind="text: taskId"></p>
+        <p class="task-id" data-bind="text: taskId"></p>
       </td>
       <td>
         @if ((string)ViewData["Lang"] == "EN")
         {
           <p data-bind="visible: isValidVisible">Valid:</p>
           <p data-bind="visible: isValidFromVisible">Valid from:</p>
-          <p data-bind="text: fromStr"></p>
+          <p data-bind="text: fromStr" class="from-to"></p>
           <p data-bind="visible: isValidToVisible">Valid to:</p>
           <p data-bind="visible: isValidToDayVisible">Valid to (included):</p>
           <p data-bind="visible: toStr">
-            <span data-bind="text: toStr"></span>
+            <span data-bind="text: toStr" class="from-to"></span>
             <span data-bind="visible: isSameDayVisible"> same day</span>
           </p>
         }
@@ -70,22 +119,22 @@ else
         {
           <p data-bind="visible: isValidVisible">Derīgs:</p>
           <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
-          <p data-bind="text: fromStr"></p>
+          <p data-bind="text: fromStr" class="from-to"></p>
           <p data-bind="visible: isValidToVisible">Derīgs līdz:</p>
           <p data-bind="visible: isValidToDayVisible">Derīgs līdz (ieskaitot):</p>
           <p data-bind="visible: toStr">
-            <span data-bind="text: toStr"></span>
+            <span data-bind="text: toStr" class="from-to"></span>
             <span data-bind="visible: isSameDayVisible"> tajā pašā dienā</span>
           </p>
         }
       </td>
       <!-- ko foreach: cells -->
       <td>
-        <p data-bind="visible: containsData">
+        <p data-bind="visible: containsData" class="volume">
           <span data-bind="text: volumeMl"></span>
           <span> ml</span>
         </p>
-        <p data-bind="visible: containsData, text: statusToStr(status)">
+        <p data-bind="visible: containsData, text: statusToStr(status), class: statusToClass(status)">
         </p>
       </td>
       <!-- /ko -->
@@ -136,9 +185,20 @@ else
 }
 
 <script>
+  function statusToClass(status) {
+    switch (status) {
+      case 0: return "status-not-started";
+      case 1: return "status-in-progress";
+      case 2: return "status-success";
+      default: return "status-error";
+    }
+  }
+
   async function reloadTasks() {
     let url = "tasks";
+    let loadingAllTasks = true;
     if (document.getElementById("hShowAllTasks").value == 0) {
+      loadingAllTasks = false;
       let localTodayBegin = new Date();
       localTodayBegin.setHours(0, 0, 0, 0);
       url = url + "?" + new URLSearchParams({
@@ -146,12 +206,20 @@ else
       });
     }
 
+    document.getElementById("mainTable").style.display = "none";
+    document.getElementById("errorDiv").style.display = "none";
+    document.getElementById("noActiveRecordsDiv").style.display = "none";
+    document.getElementById("noRecordsDiv").style.display = "none";
+    document.getElementById("loaderDiv").style.display = "block";
+
     let response = await fetch(url);
 
     if (response.ok) {
       let rows = await response.json();
 
+      let hasAnyRow = false;
       for (let row of rows) {
+        hasAnyRow = true;
         row.isValidVisible = false;
         row.isValidFromVisible = false;
         row.isValidToVisible = false;
@@ -194,9 +262,21 @@ else
           row.isValidToVisible = true;
         }
       }
+
+      document.getElementById("loaderDiv").style.display = "none";
+      if (!hasAnyRow) {
+        if (loadingAllTasks) {
+          document.getElementById("noRecordsDiv").style.display = "block";
+        } else {
+          document.getElementById("noActiveRecordsDiv").style.display = "block";
+        }
+      } else {
+        document.getElementById("mainTable").style.display = "table";
+      }
       viewModel.tableRows(rows);
     } else {
-      // TODO
+      document.getElementById("loaderDiv").style.display = "none";
+      document.getElementById("errorDiv").style.display = "block";
     }
   }
 
@@ -231,4 +311,44 @@ else
 
 @{
   Layout = "Layout";
+}
+
+@section Styles
+{
+  <style type="text/css">
+    .volume {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .task-id {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .plant-no {
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .from-to {
+      font-weight: bold;
+    }
+
+    .status-not-started {
+      color: var(--inactive-tab-bg);
+    }
+    .status-in-progress {
+      color: var(--background);
+    }
+    .status-success {
+      color: var(--headers);
+    }
+    .status-error {
+      background: var(--error);
+    }
+  </style>
+}
+
+@section Attributions
+{
+  <a href="https://www.flaticon.com/free-icons/tomato" title="tomato icons">Tomato icons created by Freepik - Flaticon</a>
+  <a href="https://www.flaticon.com/free-icons/pepper" title="pepper icons">Pepper icons created by Freepik - Flaticon</a>
 }
