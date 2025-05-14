@@ -45,7 +45,11 @@ public class StatusController : ControllerBase
             Cells = model.Plants.OrderBy(p => p.Index).Select(p => CreateCellVm(t, p)).ToList()
         }).ToList();
 
-        result.Sort(TaskRowVm.CompareForSorting);
+        if (todayStart.HasValue)
+            result.Sort(TaskRowVm.CompareForSorting);
+        else // reverse order when displaying all
+            result.Sort((t1, t2) => TaskRowVm.CompareForSorting(t2, t1));
+
         return result;
     }
 

@@ -5,6 +5,7 @@
   --inactive-tab-bg: #484858;
   --headers: #73DC2E;
   --step: 10px;
+  --radius: 5px;
 }
 
 * {
@@ -16,6 +17,7 @@ body {
   color: var(--text);
   margin: 0;
   font-family: Roboto, Arial, sans-serif;
+  font-size: 16px;
 }
 
 section.main {
@@ -23,6 +25,7 @@ section.main {
   background: var(--tab-bg);
   overflow: auto;
   padding: var(--step);
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 nav {
@@ -49,6 +52,7 @@ nav a {
   padding: var(--step);
   text-decoration: none;
   text-transform: uppercase;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 nav > div.links a {
@@ -64,21 +68,60 @@ nav a:link, nav a:visited {
   display: inline-block;
   background: var(--inactive-tab-bg);
 }
-nav a.selected:link, nav a.selected:visited {
-  display: inline-block;
-  background: var(--tab-bg);
-}
-
 nav a:hover {
   display: inline-block;
-  background: var(--tab-bg);
+  color: var(--background);
+  background: var(--headers);
 }
-
 nav a:active {
   display: inline-block;
+  background: var(--text);
+}
+nav a.selected:link, nav a.selected:visited, nav a.selected:hover {
+  display: inline-block;
   background: var(--tab-bg);
+  color: var(--text);
+}
+
+p {
+  margin: 0;
 }
 
 h1, h2, h3 {
   color: var(--headers);
+}
+
+div.switcher > button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 16px;
+  text-transform: uppercase;
+  padding: var(--step);
+  margin: 0 var(--step) 0 0;
+  background: var(--inactive-tab-bg);
+  color: var(--text);
+}
+
+div.switcher > button:hover {
+  background: var(--headers);
+  color: var(--background);
+}
+
+div.switcher > button.selected {
+  background: var(--text);
+  color: var(--background);
+}
+
+table, th, td {
+
+}
+table {
+  border: 4px solid var(--headers);
+  border-collapse: collapse;
+}
+th, td {
+  border: 2px solid var(--headers);
+  padding: var(--step);
 }

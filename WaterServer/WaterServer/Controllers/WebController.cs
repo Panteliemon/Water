@@ -50,6 +50,13 @@ public class WebController : Controller
             }).ToList()
         };
 
+        if (HttpContext.Request.Query.ContainsKey("all"))
+        {
+            string allValue = HttpContext.Request.Query["all"].ToString();
+            if ((allValue == "1") || (allValue == "true") || (allValue == "all"))
+                vm.ShowAllTasks = true;
+        }
+
         return vm;
     }
 

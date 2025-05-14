@@ -9,9 +9,34 @@ else
   <h1>Uzdevumu saraksts</h1>
 }
 
+<input id="hShowAllTasks" hidden value="@(Model.ShowAllTasks ? 1 : 0)" />
+
+<div id="swShowAllTasks" class="switcher">
+  <button class="@(Model.ShowAllTasks ? "" : "selected")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>Show Active</text>
+    }
+    else
+    {
+      <text>Rādīt aktīvos</text>
+    }
+  </button><button class="@(Model.ShowAllTasks ? "selected": "")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>Show All</text>
+    }
+    else
+    {
+      <text>Rādīt visus</text>
+    }
+  </button>
+</div>
+
 <table>
   <thead>
     <tr>
+      <th></th>
       <th></th>
       @for (int i = 0; i < Model.Plants.Count; i++)
       {
@@ -26,12 +51,11 @@ else
     <!-- ko foreach: viewModel.tableRows -->
     <tr>
       <td>
+        <p data-bind="text: taskId"></p>
+      </td>
+      <td>
         @if ((string)ViewData["Lang"] == "EN")
         {
-          <p>
-            <span>Task </span>
-            <span data-bind="text: taskId"></span>
-          </p>
           <p data-bind="visible: isValidVisible">Valid:</p>
           <p data-bind="visible: isValidFromVisible">Valid from:</p>
           <p data-bind="text: fromStr"></p>
@@ -44,10 +68,6 @@ else
         }
         else
         {
-          <p>
-            <span>Uzdevums </span>
-            <span data-bind="text: taskId"></span>
-          </p>
           <p data-bind="visible: isValidVisible">Derīgs:</p>
           <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
           <p data-bind="text: fromStr"></p>
@@ -115,18 +135,22 @@ else
   </script>
 }
 
-<script> 
-  document.addEventListener("DOMContentLoaded", async () => {
-    let localTodayBegin = new Date();
-    localTodayBegin.setHours(0, 0, 0, 0);
+<script>
+  async function reloadTasks() {
+    let url = "tasks";
+    if (document.getElementById("hShowAllTasks").value == 0) {
+      let localTodayBegin = new Date();
+      localTodayBegin.setHours(0, 0, 0, 0);
+      url = url + "?" + new URLSearchParams({
+        todayStart: localTodayBegin.toJSON()
+      });
+    }
 
-    let response = await fetch("tasks?" + new URLSearchParams({
-      todayStart: localTodayBegin.toJSON()
-    }));
+    let response = await fetch(url);
 
     if (response.ok) {
       let rows = await response.json();
-      
+
       for (let row of rows) {
         row.isValidVisible = false;
         row.isValidFromVisible = false;
@@ -137,9 +161,9 @@ else
 
         let validFrom, validTo;
         if (tryParseDate(row.utcValidFrom, d => { validFrom = d; })
-            && tryParseDate(row.utcValidTo, d => { validTo = d; })) {
+          && tryParseDate(row.utcValidTo, d => { validTo = d; })) {
           if ((validFrom.getHours() == 0) && (validFrom.getMinutes() == 0)
-              && (validTo.getHours() == 0) && (validTo.getMinutes() == 0)) {
+            && (validTo.getHours() == 0) && (validTo.getMinutes() == 0)) {
             if (validTo.getTime() == validFrom.getTime() + 1000 * 3600 * 24) {
               row.fromStr = validFrom.toLocaleDateString();
               row.isValidVisible = true;
@@ -174,6 +198,34 @@ else
     } else {
       // TODO
     }
+  }
+
+  async function setShowAllTasks(value) {
+    let buttons = [...document.querySelectorAll("#swShowAllTasks > button")];
+    for (let i = 0; i < buttons.length; i++) {
+      if (i == value) {
+        buttons[i].classList.add("selected");
+      } else {
+        buttons[i].classList.remove("selected");
+      }
+    }
+
+    if (document.getElementById("hShowAllTasks").value != value) {
+      document.getElementById("hShowAllTasks").value = value;
+      updateQueryParam("all", (value == 1) ? "1" : null);
+      await reloadTasks();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    syncLanguageLinks();
+
+    let buttons1 = [...document.querySelectorAll("#swShowAllTasks > button")];
+    for (let i = 0; i < buttons1.length; i++) {
+      buttons1[i].addEventListener("click", () => setShowAllTasks(i));
+    }
+
+    await reloadTasks();
   });
 </script>
 
