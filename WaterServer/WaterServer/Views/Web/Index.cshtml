@@ -77,79 +77,84 @@ else
   }
 </div>
 
-<table id="mainTable" style="display:none;" class="margin-top">
-  <thead>
-    <tr>
-      <th>№</th>
-      @if ((string)ViewData["Lang"] == "EN")
-      {
-        <th>Time Range</th>
-      }
-      else
-      {
-        <th>Laika posms</th>
-      }
-      @for (int i = 0; i < Model.Plants.Count; i++)
-      {
-        <th>
-          <span class="plant-no">@Model.Plants[i].ValveNo</span>
-          @if (!string.IsNullOrEmpty(Model.Plants[i].GetImgSrc()))
-          {
-            <img class="planticon" src="@Model.Plants[i].GetImgSrc()"
-                 alt="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])"
-                 title="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])" />
-          }
-        </th>
-      }
-    </tr>
-  </thead>
-  <tbody>
-    <!-- No data in page's html, sorry for that. Need to know your local timezone to select and display properly. -->
-    <!-- ko foreach: viewModel.tableRows -->
-    <tr>
-      <td>
-        <p class="task-id" data-bind="text: taskId"></p>
-      </td>
-      <td>
+<div id="mainTableWrapper">
+  <table id="mainTable" style="display:none;" class="margin-top">
+    <thead>
+      <tr>
+        <th>№</th>
         @if ((string)ViewData["Lang"] == "EN")
         {
-          <p data-bind="visible: isValidVisible">Valid:</p>
-          <p data-bind="visible: isValidFromVisible">Valid from:</p>
-          <p data-bind="text: fromStr" class="from-to"></p>
-          <p data-bind="visible: isValidToVisible">Valid to:</p>
-          <p data-bind="visible: isValidToDayVisible">Valid to (included):</p>
-          <p data-bind="visible: toStr">
-            <span data-bind="text: toStr" class="from-to"></span>
-            <span data-bind="visible: isSameDayVisible"> same day</span>
-          </p>
+          <th>Time Range</th>
         }
         else
         {
-          <p data-bind="visible: isValidVisible">Derīgs:</p>
-          <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
-          <p data-bind="text: fromStr" class="from-to"></p>
-          <p data-bind="visible: isValidToVisible">Derīgs līdz:</p>
-          <p data-bind="visible: isValidToDayVisible">Derīgs līdz (ieskaitot):</p>
-          <p data-bind="visible: toStr">
-            <span data-bind="text: toStr" class="from-to"></span>
-            <span data-bind="visible: isSameDayVisible"> tajā pašā dienā</span>
-          </p>
+          <th>Laika posms</th>
         }
-      </td>
-      <!-- ko foreach: cells -->
-      <td>
-        <p data-bind="visible: containsData" class="volume">
-          <span data-bind="text: volumeMl"></span>
-          <span> ml</span>
-        </p>
-        <p data-bind="visible: containsData, text: statusToStr(status), class: statusToClass(status)">
-        </p>
-      </td>
+        @for (int i = 0; i < Model.Plants.Count; i++)
+        {
+          <th class="plant-no">
+            @if (string.IsNullOrEmpty(Model.Plants[i].GetImgSrc()))
+            {
+              <p>@Model.Plants[i].ValveNo</p>
+            }
+            else
+            {
+              <p>@Model.Plants[i].ValveNo</p><img class="planticon"
+                src="@Model.Plants[i].GetImgSrc()"
+                alt="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])"
+                title="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])" />
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      <!-- No data in page's html, sorry for that. Need to know your local timezone to select and display properly. -->
+      <!-- ko foreach: viewModel.tableRows -->
+      <tr>
+        <td>
+          <p class="task-id" data-bind="text: taskId"></p>
+        </td>
+        <td>
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <p data-bind="visible: isValidVisible">Valid:</p>
+            <p data-bind="visible: isValidFromVisible">Valid from:</p>
+            <p data-bind="text: fromStr" class="from-to"></p>
+            <p data-bind="visible: isValidToVisible">Valid to:</p>
+            <p data-bind="visible: isValidToDayVisible">Valid to (included):</p>
+            <p data-bind="visible: toStr">
+              <span data-bind="text: toStr" class="from-to"></span>
+              <span data-bind="visible: isSameDayVisible"> same day</span>
+            </p>
+          }
+          else
+          {
+            <p data-bind="visible: isValidVisible">Derīgs:</p>
+            <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
+            <p data-bind="text: fromStr" class="from-to"></p>
+            <p data-bind="visible: isValidToVisible">Derīgs līdz:</p>
+            <p data-bind="visible: isValidToDayVisible">Derīgs līdz (ieskaitot):</p>
+            <p data-bind="visible: toStr">
+              <span data-bind="text: toStr" class="from-to"></span>
+              <span data-bind="visible: isSameDayVisible"> tajā pašā dienā</span>
+            </p>
+          }
+        </td>
+        <!-- ko foreach: cells -->
+        <td class="data-cell">
+          <p data-bind="visible: containsData" class="volume">
+            <span data-bind="text: volumeMl"></span><span> ml</span>
+          </p>
+          <p data-bind="visible: containsData, text: statusToStr(status), class: statusToClass(status)">
+          </p>
+        </td>
+        <!-- /ko -->
+      </tr>
       <!-- /ko -->
-    </tr>
-    <!-- /ko -->
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>
 
 @if (Model.UtcLastClientActivity.HasValue)
 {
@@ -214,9 +219,9 @@ else
       switch (status) {
         case 0: return "Nav sākts";
         case 1: return "Notiek";
-        case 2: return "Veiksmīgs";
+        case 2: return "Veiks\u00ADmīgs";
         case 10: return "Zems ātrums";
-        case 11: return "Nav skaitītāja";
+        case 11: return "Nav skaitī\u00ADtāja";
         case 99: return "KĻŪDA";
         default: return "Nezināms";
       }
@@ -356,6 +361,10 @@ else
 @section Styles
 {
   <style type="text/css">
+    #mainTableWrapper {
+      overflow-x: auto;
+    }
+
     .volume {
       font-size: 24px;
       font-weight: bold;
@@ -369,6 +378,7 @@ else
     .task-id {
       font-size: 32px;
       font-weight: bold;
+      text-align: center;
     }
     @@media only screen and (max-width: 600px) {
       .task-id {
@@ -379,15 +389,39 @@ else
     .plant-no {
       font-size: 32px;
       font-weight: bold;
+      padding-left: 3px;
+      padding-right: 3px;
+      min-width: 120px;
     }
-    @@media only screen and (max-width: 600px) {
+    .plant-no > p {
+      display: inline-block;
+    }
+    .plant-no > * {
+      margin-left: 3px;
+      margin-right: 3px;
+    }
+    @@media only screen and (max-width: 800px) {
       .plant-no {
         font-size: 26px;
+        min-width: unset;
+      }
+      .plant-no > p {
+        display: block;
       }
     }
-
+    @@media only screen and (max-width: 600px) {
+      .data-cell {
+        vertical-align: top;
+      }
+    }
+    
     .from-to {
       font-weight: bold;
+    }
+    @@media only screen and (max-width: 600px) {
+      .from-to {
+        font-size: 16px;
+      }
     }
 
     .status-not-started {
@@ -407,7 +441,6 @@ else
       height: 32px;
       width: 32px;
       object-fit: none;
-      margin-left: var(--step);
     }
   </style>
 }
