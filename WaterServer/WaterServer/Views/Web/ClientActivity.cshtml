@@ -173,6 +173,9 @@ else
 
     if (response.ok) {
       let rows = [...(await response.json())];
+      for (let row of rows) {
+        tryParseDate(row.utcTimeStamp, d => { row.utcTimeStamp = d; })
+      }
 
       document.getElementById("loaderDiv").style.display = "none";
       if (rows.length > 0) {
