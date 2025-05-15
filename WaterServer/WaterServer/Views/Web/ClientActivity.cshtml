@@ -11,6 +11,59 @@ else
   <h1>Ierīces aktivitāte</h1>
 }
 
+<input id="hFilter" hidden value="@((int)Model.Filter)" />
+<div id="swFilter" class="switcher margin-top">
+  <button class="@(Model.Filter == ClientActivityFilter.Today ? "selected" : "")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>Today</text>
+    }
+    else
+    {
+      <text>Šodien</text>
+    }
+  </button><button class="@(Model.Filter == ClientActivityFilter.FiveDays ? "selected" : "")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>5 Days</text>
+    }
+    else
+    {
+      <text>5 dienas</text>
+    }
+  </button><button class="@(Model.Filter == ClientActivityFilter.All ? "selected" : "")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>All</text>
+    }
+    else
+    {
+      <text>Visas</text>
+    }
+  </button>
+</div>
+
+<div id="loaderDiv" class="loader margin-top">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Loading...</text>
+  }
+  else
+  {
+    <text>Ielāde...</text>
+  }
+</div>
+<div id="errorDiv" class="error margin-top" style="display:none;">
+  <span>[x]</span>
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Error, data not retrieved :(</text>
+  }
+  else
+  {
+    <text>Kļūda, dati nav saņemti :(</text>
+  }
+</div>
 <div id="noRecordsDiv" class="no-records margin-top" style="display:none;">
   @if ((string)ViewData["Lang"] == "EN")
   {
@@ -50,26 +103,6 @@ else
 </table>
 
 <script>
-  let rowsInitial = [
-  @{
-    for (int i = 0; i < Model.TableRows.Count; i++)
-    {
-      ClientActivityRowVm row = Model.TableRows[i];
-      if (i == Model.TableRows.Count - 1)
-      {
-  <text>    { utcTimeStamp: new Date(@(row.UtcTimeStamp.UtcToJsMilliseconds())), activityType: @((int)row.ActivityType) }
-  </text>
-      }
-      else
-      {
-  <text>    { utcTimeStamp: new Date(@(row.UtcTimeStamp.UtcToJsMilliseconds())), activityType: @((int)row.ActivityType) },
-  </text>
-      }
-
-    }
-  }
-  ];
-
   let viewModel = {
     tableRows: ko.observable([]),
   };
@@ -113,16 +146,74 @@ else
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (rowsInitial.length == 0) {
-      document.getElementById("noRecordsDiv").style.display = "block";
-      document.getElementById("mainTable").style.display = "none";
-    } else {
-      document.getElementById("noRecordsDiv").style.display = "none";
-      document.getElementById("mainTable").style.display = "table";
+  async function loadActivities() {
+    let url = "/activities";
+    let filterValue = Number(document.getElementById("hFilter").value);
+    if (filterValue == 0) {
+      let localTodayBegin = new Date();
+      localTodayBegin.setHours(0, 0, 0, 0);
+      url = url + "?" + new URLSearchParams({
+        from: localTodayBegin.toJSON()
+      });
+    } else if (filterValue == 1) {
+      let fiveDaysAgo = new Date();
+      fiveDaysAgo.setHours(0, 0, 0, 0);
+      fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 4);
+      url = url + "?" + new URLSearchParams({
+        from: fiveDaysAgo.toJSON()
+      });
     }
 
-    viewModel.tableRows(rowsInitial);
+    document.getElementById("errorDiv").style.display = "none";
+    document.getElementById("noRecordsDiv").style.display = "none";
+    document.getElementById("mainTable").style.display = "none";
+    document.getElementById("loaderDiv").style.display = "block";
+
+    let response = await fetch(url);
+
+    if (response.ok) {
+      let rows = [...(await response.json())];
+
+      document.getElementById("loaderDiv").style.display = "none";
+      if (rows.length > 0) {
+        document.getElementById("mainTable").style.display = "table";
+      } else {
+        document.getElementById("noRecordsDiv").style.display = "block";
+      }
+
+      viewModel.tableRows(rows);
+    } else {
+      document.getElementById("loaderDiv").style.display = "none";
+      document.getElementById("errorDiv").style.display = "block";
+    }
+  }
+
+  async function setFilter(value) {
+    let buttons = [...document.querySelectorAll("#swFilter > button")];
+    for (let i = 0; i < buttons.length; i++) {
+      if (i == value) {
+        buttons[i].classList.add("selected");
+      } else {
+        buttons[i].classList.remove("selected");
+      }
+    }
+
+    if (document.getElementById("hFilter").value != value) {
+      document.getElementById("hFilter").value = value;
+      updateQueryParam("filter", (value == 0) ? null : value);
+      await loadActivities();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    syncLanguageLinks();
+
+    let buttons1 = [...document.querySelectorAll("#swFilter > button")];
+    for (let i = 0; i < buttons1.length; i++) {
+      buttons1[i].addEventListener("click", () => setFilter(i));
+    }
+
+    await loadActivities();
   });
 </script>
 
