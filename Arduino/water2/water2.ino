@@ -2,6 +2,7 @@
 #include "networking.h"
 #include "hardware.h"
 #include "pour.h"
+#include "blink.h"
 
 void setup() {
   initHardware();
@@ -36,8 +37,6 @@ void loop() {
 
 void mainLoop() {
   while (true) {
-    blinkMedium(1);
-
     Task currentTask;
     if (tryGetNextTask(currentTask)) {
       for (int i=0; i<currentTask.itemsCount; i++) {
@@ -63,39 +62,6 @@ void mainLoop() {
   }
 }
 
-void blinkFast(int numberOfTimes) {
-  for (int i=0; i<numberOfTimes; i++) {
-    if (i > 0) {
-      delay(170);
-    }
-    setExtLed(true);
-    delay(80);
-    setExtLed(false);
-  }
-}
-
-void blinkMedium(int numberOfTimes) {
-  for (int i=0; i<numberOfTimes; i++) {
-    if (i > 0) {
-      delay(250);
-    }
-    setExtLed(true);
-    delay(250);
-    setExtLed(false);
-  }
-}
-
-void blinkSlow(int numberOfTimes) {
-  for (int i=0; i<numberOfTimes; i++) {
-    if (i > 0) {
-      delay(1000);
-    }
-    setExtLed(true);
-    delay(1000);
-    setExtLed(false);
-  }
-}
-
 // Initiates sequence of user entering valve number:
 // - demand for press ESTOP with Ext LED constantly glowing
 // - beep-boop
@@ -118,7 +84,7 @@ int enterValveIndexUnderEStop() {
           xPressedCount++;
           blinkFast(1);
         } else {
-          blinkFast(3);
+          blinkFast(4);
         }
       }
 
@@ -130,8 +96,8 @@ int enterValveIndexUnderEStop() {
     setExtLed(false);
 
     if (xPressedCount == 0) {
-      blinkFast(3);
-      delay(200);
+      blinkFast(4);
+      delay(250);
       // Repeat over.
     } else {
       // Display to the user
@@ -182,7 +148,7 @@ void displayDigit(int digit) {
   if (digit == 0) {
     blinkSlow(1);
   } else {
-    blinkFast(digit);
+    blinkMedium(digit);
   }
 }
 
@@ -241,7 +207,7 @@ void calibration() {
             setCountsPerLiter(countsPerLiter + STEP);
             blinkFast(1);
           } else {
-            blinkFast(3);
+            blinkFast(4);
           }
         } else {
           // Decrement
@@ -249,7 +215,7 @@ void calibration() {
             setCountsPerLiter(countsPerLiter - STEP);
             blinkFast(1);
           } else {
-            blinkFast(3);
+            blinkFast(4);
           }
         }
       }

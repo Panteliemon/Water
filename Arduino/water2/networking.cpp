@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "ResponseReader.h"
 #include "pour.h"
+#include "blink.h"
 
 const char *ssid = WIFI_SSID;
 const char *pass = WIFI_PASS;
@@ -52,6 +53,7 @@ void initNetwork() {
 HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response) {
   if (netClient.connect(serverDomain, 443)) {
     Serial.println("Sending HTTP request...");
+    blinkFast(1);
 
     netClient.print("POST ");
     netClient.print(route);
@@ -78,7 +80,7 @@ HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response)
 
     // Grab response
     Serial.println("Reading response...");
-    ResponseReader responseReader(&responseBuffer);
+    ResponseReader responseReader(response);
     while (netClient.connected()) {
       while (netClient.available()) {
         char c = netClient.read();
@@ -93,6 +95,7 @@ HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response)
     if (responseReader.isParsedSuccessfully()) {
       Serial.print("Response parsed OK. Code ");
       Serial.println(responseReader.getStatusCode());
+      blinkFast(1);
 
       if (responseReader.getStatusCode() == 200) {
         return HS_OK;
@@ -101,9 +104,12 @@ HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response)
       }
     } else {
       Serial.println("[x] Could not parse response");
+      blinkFast(3); // totally 4, 6 or 8 blinks for bad response because of possible immediate sendError
       return HS_BADRESPONSE;
     }
   } else {
+    blinkFast(20);
+
     return HS_NETWORKERROR;
   }
 }
