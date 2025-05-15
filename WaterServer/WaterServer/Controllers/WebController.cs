@@ -63,9 +63,9 @@ public class WebController : Controller
 
     [Route("activity")]
     [Route("activity/lv")]
-    public async Task<IActionResult> ClientActivity()
+    public IActionResult ClientActivity()
     {
-        ClientActivityPageVm vm = await LoadClientActivity();
+        ClientActivityPageVm vm = CreateClientActivityVm();
         ViewData["Title"] = "Ierīces aktivitāte - Bn Waterer";
         ViewData["Lang"] = "LV";
         SetLinks("/activity");
@@ -73,41 +73,34 @@ public class WebController : Controller
     }
 
     [Route("activity/en")]
-    public async Task<IActionResult> ClientActivityEn()
+    public IActionResult ClientActivityEn()
     {
-        ClientActivityPageVm vm = await LoadClientActivity();
+        ClientActivityPageVm vm = CreateClientActivityVm();
         ViewData["Title"] = "Device Activity - Bn Waterer";
         ViewData["Lang"] = "EN";
         SetLinks("/activity");
         return View("ClientActivity", vm);
     }
 
-    private async Task<ClientActivityPageVm> LoadClientActivity()
+    private ClientActivityPageVm CreateClientActivityVm()
     {
-        SModel model = await repository.ReadAll();
-        ClientActivityPageVm vm = new()
-        {
-            TableRows = model.ClientActivities.Select(ca => new ClientActivityRowVm()
-            {
-                ActivityType = ca.ActivityType,
-                UtcTimeStamp = ca.UtcTimeStamp
-            }).ToList()
-        };
+        ClientActivityPageVm vm = new();
 
-        if (model.LastClientActivity != null)
+        if (HttpContext.Request.Query.ContainsKey("filter"))
         {
-            if (vm.TableRows.FirstOrDefault(ca => (ca.ActivityType == model.LastClientActivity.ActivityType)
-                                                  && (ca.UtcTimeStamp == model.LastClientActivity.UtcTimeStamp)) == null)
+            string filterValue = HttpContext.Request.Query["filter"].ToString();
+            if (int.TryParse(filterValue, out int parsedInt))
             {
-                vm.TableRows.Add(new ClientActivityRowVm()
+                if (Enum.IsDefined(typeof(ClientActivityFilter), parsedInt))
                 {
-                    ActivityType = model.LastClientActivity.ActivityType,
-                    UtcTimeStamp = model.LastClientActivity.UtcTimeStamp
-                });
+                    vm.Filter = (ClientActivityFilter)parsedInt;
+                }
+            }
+            else if (Enum.TryParse(typeof(ClientActivityFilter), filterValue, out object parsedEnum))
+            {
+                vm.Filter = (ClientActivityFilter)parsedEnum;
             }
         }
-
-        vm.TableRows.Sort((ca1, ca2) => DateTime.Compare(ca2.UtcTimeStamp, ca1.UtcTimeStamp));
 
         return vm;
     }

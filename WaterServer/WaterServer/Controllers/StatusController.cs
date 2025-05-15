@@ -53,6 +53,38 @@ public class StatusController : ControllerBase
         return result;
     }
 
+    [HttpGet("/activities")]
+    public async Task<List<ClientActivityRowVm>> GetClientActivityRows(DateTime? from)
+    {
+        SModel model = await repository.ReadAll();
+
+        IEnumerable<SClientActivityRec> filtered = from.HasValue
+            ? model.ClientActivities.Where(ca => ca.UtcTimeStamp >= from)
+            : model.ClientActivities;
+
+        List<ClientActivityRowVm> result = filtered.Select(ca => new ClientActivityRowVm()
+        {
+            UtcTimeStamp = ca.UtcTimeStamp,
+            ActivityType = ca.ActivityType
+        }).ToList();
+
+        if (model.LastClientActivity != null)
+        {
+            if (result.FirstOrDefault(ca => (ca.UtcTimeStamp == model.LastClientActivity.UtcTimeStamp)
+                                            && (ca.ActivityType == model.LastClientActivity.ActivityType)) == null)
+            {
+                result.Add(new ClientActivityRowVm()
+                {
+                    UtcTimeStamp = model.LastClientActivity.UtcTimeStamp,
+                    ActivityType = model.LastClientActivity.ActivityType
+                });
+            }
+        }
+
+        result.Sort((ca1, ca2) => DateTime.Compare(ca2.UtcTimeStamp, ca1.UtcTimeStamp));
+        return result;
+    }
+
     private static TaskCellVm CreateCellVm(STask task, SPlant plant)
     {
         STaskItem taskItem = task.Items.FirstOrDefault(item => item.Plant == plant);
