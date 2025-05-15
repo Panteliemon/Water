@@ -29,11 +29,11 @@
     <div class="links">
       @if ((string)ViewData["Lang"] == "EN")
       {
-        <a href="/en" class="@(ViewData["/"] != null ? "selected" : "")">Tasks</a><a href="/activity/en" class="@(ViewData["/activity"] != null ? "selected" : "")">Device Activity</a>
+        <a href="/en" class="@(ViewData["/"] != null ? "selected" : "")">Tasks</a><a href="/activity/en" class="@(ViewData["/activity"] != null ? "selected" : "")">Device Activity</a><a href="/about/en" class="@(ViewData["/about"] != null ? "selected" : "")">About</a>
       }
       else
       {
-        <a href="/" class="@(ViewData["/"] != null ? "selected" : "")">Uzdevumi</a><a href="/activity" class="@(ViewData["/activity"] != null ? "selected" : "")">Ierīces Aktivitāte</a>
+        <a href="/" class="@(ViewData["/"] != null ? "selected" : "")">Uzdevumi</a><a href="/activity" class="@(ViewData["/activity"] != null ? "selected" : "")">Ierīces Aktivitāte</a><a href="/about" class="@(ViewData["/about"] != null ? "selected" : "")">Par</a>
       } 
     </div>
     <div class="languages">

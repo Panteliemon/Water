@@ -112,6 +112,25 @@ public class WebController : Controller
         return vm;
     }
 
+    [Route("about")]
+    [Route("about/lv")]
+    public IActionResult About()
+    {
+        ViewData["Title"] = "Par - Bn Waterer";
+        ViewData["Lang"] = "LV";
+        SetLinks("/about");
+        return View("About");
+    }
+
+    [Route("about/en")]
+    public IActionResult AboutEn()
+    {
+        ViewData["Title"] = "About - Bn Waterer";
+        ViewData["Lang"] = "EN";
+        SetLinks("/about");
+        return View("About");
+    }
+
     private void SetLinks(string baseUrl)
     {
         ViewData[baseUrl] = true;
