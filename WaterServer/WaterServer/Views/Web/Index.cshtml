@@ -151,7 +151,6 @@ else
   </tbody>
 </table>
 
-<input hidden value="@(Model.UtcLastClientActivity?.UtcToJsMilliseconds() ?? 0)" id="hLastActivity" />
 @if (Model.UtcLastClientActivity.HasValue)
 {
   <p class="margin-top">
@@ -163,11 +162,10 @@ else
     {
       <span>Pēdējā ierīces aktivitāte: </span>
     }
-    <span data-bind="text: viewModel.lastActivityStr"></span>
+    <span data-bind="text: viewModel.lastActivity.toLocaleString()"></span>
   </p>
 }
 
-<input hidden value="@(Model.CountsPerLiter ?? 0)" id="hCountsPerLiter" />
 @if (Model.CountsPerLiter.HasValue)
 {
   <p class="margin-top">
@@ -186,8 +184,8 @@ else
 <script>
   let viewModel = {
     tableRows: ko.observable([]),
-    lastActivityStr: ko.observable(""),
-    countsPerLiter: ko.observable(0)
+    lastActivity: new Date(@(Model.UtcLastClientActivity?.UtcToJsMilliseconds() ?? 0)),
+    countsPerLiter: @(Model.CountsPerLiter ?? 0)
   };
 
   ko.applyBindings(viewModel);
@@ -341,11 +339,6 @@ else
 
   document.addEventListener("DOMContentLoaded", async () => {
     syncLanguageLinks();
-
-    let lastActivity = new Date(Number(document.getElementById("hLastActivity").value));
-    viewModel.lastActivityStr(lastActivity.toLocaleString());
-    let countsPerLiter = Number(document.getElementById("hCountsPerLiter").value);
-    viewModel.countsPerLiter(countsPerLiter);
 
     let buttons1 = [...document.querySelectorAll("#swShowAllTasks > button")];
     for (let i = 0; i < buttons1.length; i++) {

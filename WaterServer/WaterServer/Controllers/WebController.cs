@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using WaterServer.ModelSimple;
@@ -64,19 +65,51 @@ public class WebController : Controller
     [Route("activity/lv")]
     public async Task<IActionResult> ClientActivity()
     {
+        ClientActivityPageVm vm = await LoadClientActivity();
         ViewData["Title"] = "Ierīces aktivitāte - Bn Waterer";
         ViewData["Lang"] = "LV";
         SetLinks("/activity");
-        return View("ClientActivity");
+        return View("ClientActivity", vm);
     }
 
     [Route("activity/en")]
     public async Task<IActionResult> ClientActivityEn()
     {
+        ClientActivityPageVm vm = await LoadClientActivity();
         ViewData["Title"] = "Device Activity - Bn Waterer";
         ViewData["Lang"] = "EN";
         SetLinks("/activity");
-        return View("ClientActivity");
+        return View("ClientActivity", vm);
+    }
+
+    private async Task<ClientActivityPageVm> LoadClientActivity()
+    {
+        SModel model = await repository.ReadAll();
+        ClientActivityPageVm vm = new()
+        {
+            TableRows = model.ClientActivities.Select(ca => new ClientActivityRowVm()
+            {
+                ActivityType = ca.ActivityType,
+                UtcTimeStamp = ca.UtcTimeStamp
+            }).ToList()
+        };
+
+        if (model.LastClientActivity != null)
+        {
+            if (vm.TableRows.FirstOrDefault(ca => (ca.ActivityType == model.LastClientActivity.ActivityType)
+                                                  && (ca.UtcTimeStamp == model.LastClientActivity.UtcTimeStamp)) == null)
+            {
+                vm.TableRows.Add(new ClientActivityRowVm()
+                {
+                    ActivityType = model.LastClientActivity.ActivityType,
+                    UtcTimeStamp = model.LastClientActivity.UtcTimeStamp
+                });
+            }
+        }
+
+        vm.TableRows.Sort((ca1, ca2) => DateTime.Compare(ca2.UtcTimeStamp, ca1.UtcTimeStamp));
+
+        return vm;
     }
 
     private void SetLinks(string baseUrl)
