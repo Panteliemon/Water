@@ -1,0 +1,478 @@
+﻿@model WaterServer.ViewModels.IndexVm
+@using WaterServer.ModelSimple
+@using WaterServer.Utils
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <h1>Tasks List</h1>
+}
+else
+{
+  <h1>Uzdevumu saraksts</h1>
+}
+
+<input id="hShowAllTasks" hidden value="@(Model.ShowAllTasks ? 1 : 0)" />
+
+<div id="swShowAllTasks" class="switcher margin-top">
+  <button class="@(Model.ShowAllTasks ? "" : "selected")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>Show Active</text>
+    }
+    else
+    {
+      <text>Rādīt aktīvos</text>
+    }
+  </button><button class="@(Model.ShowAllTasks ? "selected": "")">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <text>Show All</text>
+    }
+    else
+    {
+      <text>Rādīt visus</text>
+    }
+  </button>
+</div>
+
+<div id="loaderDiv" class="loader margin-top">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Loading...</text>
+  }
+  else
+  {
+    <text>Ielāde...</text>
+  }
+</div>
+<div id="errorDiv" class="error margin-top" style="display:none;">
+  <span>[x]</span>
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Error, data not retrieved :(</text>
+  }
+  else
+  {
+    <text>Kļūda, dati nav saņemti :(</text>
+  }
+</div>
+<div id="noActiveRecordsDiv" class="no-records margin-top" style="display:none;">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>No active tasks :)</text>
+  }
+  else
+  {
+    <text>Aktīvo uzdevumu nav :)</text>
+  }
+</div>
+<div id="noRecordsDiv" class="no-records margin-top" style="display:none;">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>No tasks at all! :)</text>
+  }
+  else
+  {
+    <text>Uzdevumu nu vispār nav! :)</text>
+  }
+</div>
+
+<div id="mainTableWrapper">
+  <table id="mainTable" style="display:none;" class="margin-top">
+    <thead>
+      <tr>
+        <th>№</th>
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <th>Time Range</th>
+        }
+        else
+        {
+          <th>Laika posms</th>
+        }
+        @for (int i = 0; i < Model.Plants.Count; i++)
+        {
+          <th class="plant-no">
+            @if (string.IsNullOrEmpty(Model.Plants[i].GetImgSrc()))
+            {
+              <p>@Model.Plants[i].ValveNo</p>
+            }
+            else
+            {
+              <p>@Model.Plants[i].ValveNo</p><img class="planticon"
+                src="@Model.Plants[i].GetImgSrc()"
+                alt="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])"
+                title="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])" />
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      <!-- No data in page's html, sorry for that. Need to know your local timezone to select and display properly. -->
+      <!-- ko foreach: viewModel.tableRows -->
+      <tr>
+        <td>
+          <p class="task-id" data-bind="text: taskId"></p>
+        </td>
+        <td>
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <p data-bind="visible: isValidVisible">Valid:</p>
+            <p data-bind="visible: isValidFromVisible">Valid from:</p>
+            <p data-bind="text: fromStr" class="from-to"></p>
+            <p data-bind="visible: isValidToVisible">Valid to:</p>
+            <p data-bind="visible: isValidToDayVisible">Valid to (included):</p>
+            <p data-bind="visible: toStr">
+              <span data-bind="text: toStr" class="from-to"></span>
+              <span data-bind="visible: isSameDayVisible"> same day</span>
+            </p>
+          }
+          else
+          {
+            <p data-bind="visible: isValidVisible">Derīgs:</p>
+            <p data-bind="visible: isValidFromVisible">Derīgs no:</p>
+            <p data-bind="text: fromStr" class="from-to"></p>
+            <p data-bind="visible: isValidToVisible">Derīgs līdz:</p>
+            <p data-bind="visible: isValidToDayVisible">Derīgs līdz (ieskaitot):</p>
+            <p data-bind="visible: toStr">
+              <span data-bind="text: toStr" class="from-to"></span>
+              <span data-bind="visible: isSameDayVisible"> tajā pašā dienā</span>
+            </p>
+          }
+        </td>
+        <!-- ko foreach: cells -->
+        <td class="data-cell">
+          <p data-bind="visible: containsData" class="volume">
+            <span data-bind="text: volumeMl"></span><span> ml</span>
+          </p>
+          <p data-bind="visible: containsData, text: statusToStr(status), class: statusToClass(status)">
+          </p>
+        </td>
+        <!-- /ko -->
+      </tr>
+      <!-- /ko -->
+    </tbody>
+  </table>
+</div>
+
+@if (Model.UtcLastClientActivity.HasValue)
+{
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Latest device's activity: </span>
+    }
+    else
+    {
+      <span>Pēdējā ierīces aktivitāte: </span>
+    }
+    <span data-bind="text: viewModel.lastActivity.toLocaleString()"></span>
+  </p>
+}
+
+@if (Model.CountsPerLiter.HasValue)
+{
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Currently used counts per liter: </span>
+    }
+    else
+    {
+      <span>Šobrīd lietoti skaiti litrā: </span>
+    }
+    <span data-bind="text: viewModel.countsPerLiter"></span>
+  </p>
+}
+
+<script>
+  let viewModel = {
+    tableRows: ko.observable([]),
+    lastActivity: new Date(@(Model.UtcLastClientActivity?.UtcToJsMilliseconds() ?? 0)),
+    countsPerLiter: @(Model.CountsPerLiter ?? 0)
+  };
+
+  ko.applyBindings(viewModel);
+</script>
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <script>
+    function statusToStr(status) {
+      switch (status) {
+        case 0: return "Not Started";
+        case 1: return "In Progress";
+        case 2: return "Success";
+        case 10: return "Low Rate";
+        case 11: return "No Counter";
+        case 99: return "ERROR";
+        default: return "Unknown";
+      }
+    }
+  </script>
+}
+else
+{
+  <script>
+    function statusToStr(status) {
+      switch (status) {
+        case 0: return "Nav sākts";
+        case 1: return "Notiek";
+        case 2: return "Veiks\u00ADmīgs";
+        case 10: return "Zems ātrums";
+        case 11: return "Nav skaitī\u00ADtāja";
+        case 99: return "KĻŪDA";
+        default: return "Nezināms";
+      }
+    }
+  </script>
+}
+
+<script>
+  function statusToClass(status) {
+    switch (status) {
+      case 0: return "status-not-started";
+      case 1: return "status-in-progress";
+      case 2: return "status-success";
+      default: return "status-error";
+    }
+  }
+
+  async function reloadTasks() {
+    let url = "tasks";
+    let loadingAllTasks = true;
+    if (document.getElementById("hShowAllTasks").value == 0) {
+      loadingAllTasks = false;
+      let localTodayBegin = new Date();
+      localTodayBegin.setHours(0, 0, 0, 0);
+      url = url + "?" + new URLSearchParams({
+        todayStart: localTodayBegin.toJSON()
+      });
+    }
+
+    document.getElementById("mainTable").style.display = "none";
+    document.getElementById("errorDiv").style.display = "none";
+    document.getElementById("noActiveRecordsDiv").style.display = "none";
+    document.getElementById("noRecordsDiv").style.display = "none";
+    document.getElementById("loaderDiv").style.display = "block";
+
+    let response = await fetch(url);
+
+    if (response.ok) {
+      let rows = await response.json();
+
+      let hasAnyRow = false;
+      for (let row of rows) {
+        hasAnyRow = true;
+        row.isValidVisible = false;
+        row.isValidFromVisible = false;
+        row.isValidToVisible = false;
+        row.isValidToDayVisible = false;
+        row.isSameDayVisible = false;
+        row.toStr = null;
+
+        let validFrom, validTo;
+        if (tryParseDate(row.utcValidFrom, d => { validFrom = d; })
+          && tryParseDate(row.utcValidTo, d => { validTo = d; })) {
+          if ((validFrom.getHours() == 0) && (validFrom.getMinutes() == 0)
+            && (validTo.getHours() == 0) && (validTo.getMinutes() == 0)) {
+            if (validTo.getTime() == validFrom.getTime() + 1000 * 3600 * 24) {
+              row.fromStr = validFrom.toLocaleDateString();
+              row.isValidVisible = true;
+            } else {
+              row.fromStr = validFrom.toLocaleDateString();
+              row.toStr = new Date(validTo.getTime() - 1000 * 3600 * 24).toLocaleDateString();
+              row.isValidFromVisible = true;
+              row.isValidToDayVisible = true;
+            }
+          } else {
+            if ((validFrom.getFullYear() == validTo.getFullYear()) && (validFrom.getMonth() == validTo.getMonth()) && (validFrom.getDate() == validTo.getDate())) {
+              row.fromStr = validFrom.toLocaleString();
+              row.toStr = validTo.toLocaleTimeString();
+              row.isValidFromVisible = true;
+              row.isValidToVisible = true;
+              row.isSameDayVisible = true;
+            } else {
+              row.fromStr = validFrom.toLocaleString();
+              row.toStr = validTo.toLocaleString();
+              row.isValidFromVisible = true;
+              row.isValidToVisible = true;
+            }
+          }
+        } else {
+          row.fromStr = row.utcValidFrom;
+          row.toStr = row.utcValidTo;
+          row.isValidFromVisible = true;
+          row.isValidToVisible = true;
+        }
+      }
+
+      document.getElementById("loaderDiv").style.display = "none";
+      if (!hasAnyRow) {
+        if (loadingAllTasks) {
+          document.getElementById("noRecordsDiv").style.display = "block";
+        } else {
+          document.getElementById("noActiveRecordsDiv").style.display = "block";
+        }
+      } else {
+        document.getElementById("mainTable").style.display = "table";
+      }
+      viewModel.tableRows(rows);
+    } else {
+      document.getElementById("loaderDiv").style.display = "none";
+      document.getElementById("errorDiv").style.display = "block";
+    }
+  }
+
+  async function setShowAllTasks(value) {
+    let buttons = [...document.querySelectorAll("#swShowAllTasks > button")];
+    for (let i = 0; i < buttons.length; i++) {
+      if (i == value) {
+        buttons[i].classList.add("selected");
+      } else {
+        buttons[i].classList.remove("selected");
+      }
+    }
+
+    if (document.getElementById("hShowAllTasks").value != value) {
+      document.getElementById("hShowAllTasks").value = value;
+      updateQueryParam("all", (value == 1) ? "1" : null);
+      await reloadTasks();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    syncLanguageLinks();
+
+    let buttons1 = [...document.querySelectorAll("#swShowAllTasks > button")];
+    for (let i = 0; i < buttons1.length; i++) {
+      buttons1[i].addEventListener("click", () => setShowAllTasks(i));
+    }
+
+    await reloadTasks();
+  });
+</script>
+
+@{
+  Layout = "Layout";
+}
+
+@section Styles
+{
+  <style type="text/css">
+    #mainTableWrapper {
+      overflow-x: auto;
+    }
+
+    .volume {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    @@media only screen and (max-width: 600px) {
+      .volume {
+        font-size: 19.5px;
+      }
+    }
+
+    .task-id {
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+    }
+    @@media only screen and (max-width: 600px) {
+      .task-id {
+        font-size: 26px;
+      }
+    }
+
+    .plant-no {
+      font-size: 32px;
+      font-weight: bold;
+      padding-left: 3px;
+      padding-right: 3px;
+      min-width: 120px;
+    }
+    .plant-no > p {
+      display: inline-block;
+    }
+    .plant-no > * {
+      margin-left: 3px;
+      margin-right: 3px;
+    }
+    @@media only screen and (max-width: 800px) {
+      .plant-no {
+        font-size: 26px;
+        min-width: unset;
+      }
+      .plant-no > p {
+        display: block;
+      }
+    }
+    @@media only screen and (max-width: 600px) {
+      .data-cell {
+        vertical-align: top;
+      }
+    }
+    
+    .from-to {
+      font-weight: bold;
+    }
+    @@media only screen and (max-width: 600px) {
+      .from-to {
+        font-size: 16px;
+      }
+    }
+
+    .status-not-started {
+      color: var(--inactive-tab-bg);
+    }
+    .status-in-progress {
+      color: var(--background);
+    }
+    .status-success {
+      color: var(--headers);
+    }
+    .status-error {
+      background: var(--error);
+    }
+
+    .planticon {
+      height: 32px;
+      width: 32px;
+      object-fit: none;
+    }
+  </style>
+}
+
+@section Attributions
+{
+  <p>
+    <a href="https://www.flaticon.com/free-icons/tomato"
+       class="attribution"
+       title="tomato icons">
+      Tomato icons created by Freepik - Flaticon
+    </a>
+  </p>
+  @if (Model.Plants.Any(p => p.PlantType == SPlantType.CayennePepper))
+  {
+    <p>
+      <a href="https://www.flaticon.com/free-icons/pepper"
+         class="attribution"
+         title="pepper icons">
+        Pepper icons created by Freepik - Flaticon
+      </a>
+    </p>
+  }
+  @if (Model.Plants.Any(p => p.PlantType == SPlantType.Drain))
+  {
+    <p>
+      <a href="https://www.flaticon.com/free-icons/sewage"
+         class="attribution"
+         title="sewage icons">
+        Sewage icons created by Freepik - Flaticon
+      </a>
+    </p>
+  }
+  <div style="height:5px;"></div>
+}

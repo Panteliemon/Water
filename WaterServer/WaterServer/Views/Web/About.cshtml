@@ -1,0 +1,81 @@
+﻿<div class="gallery">
+  <img src="~/waterer-front.jpg" alt="Waterer 1.0" title="Waterer 1.0 - former 2.0 when there were no WiFi module and no Extension module" />
+  <img src="~/waterer-back.jpg" alt="Waterer 1.0" title="Waterer 1.0 - former 2.0 when there were no WiFi module and no Extension module" />
+</div>
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <p class="margin-top">
+    <b>Waterer 2.0</b> is a programmable device for watering plants, which takes tasks
+from this website and waters plants accordingly. This allows to water your home plants
+while physically being in any point of the world!
+  </p>
+  <p>Advantages:</p>
+  <ul>
+    <li><b>Individual dosage</b> - up to 8 plants controlled independently: none of the commercially available solutions will provide you that, I'm telling ya</li>
+    <li><b>BIG portions of water per plant</b> - suitable not only for violets or cacti, but for real challenges for men as well.
+Tomatoes? - no problem sir, CACAO TREES? - NO PROBLEM! You gonna need big tank of water though (not included)</li>
+    <li><b>Highly customizable schedule</b> - setup any schedule you want, I mean it, literally any schedule you want.</li>
+  </ul>
+  <p>
+    This website is completely read-only and displays current state, so I can check on it from my phone.
+    Setting things up is possible via special software only.
+  </p>
+  <p>
+    <a href="https://github.com/Panteliemon/Water">Source code</a>
+  </p>
+}
+else
+{
+  <p class="margin-top">
+    <b>Waterer 2.0</b> (jeb <b>Laistītājs 2.0</b>) ir programmējama ierīce augu laistīšanai,
+    kas ņem uzdevumus no šīs tīmekļvietnes un attiecīgi laista augus. Tas ļauj laistīt mājas augus,
+    fiziski atrodoties jebkurā pasaules malā!
+  </p>
+  <p>Priekšrokas:</p>
+  <ul>
+    <li><b>Individuālas devas</b> - līdz pat 8 neatkarīgi kontrolētiem augiem: neviens no komerciāli pieejamajiem risinājumiem to nenodrošinās, taču saku</li>
+    <li><b>LIELAS ūdens porcijas uz vienu augu</b> - piemērots ne tikai vijolītēm un kaktusiem, bet ari īstiem vīriešu izaicinājumiem.
+Tomātus? - nav problēmu kungs, KAKAO KOKUS? - NAV PROBLĒMU! Vajadzēs milzīgu ūdens tvertni tomēr (nav iekļauta)</li>
+    <li><b>Ļoti pielāgojams saraksts</b> - veidojiet jebkuru sarakstu kādu vēlaties, nopietni, burtiski jebkuru sarakstu kādu vēlaties.</li>
+  </ul>
+  <p>
+    Šī vietne ir pilnībā tikai lasāma un atspoguļo pašreizējo stāvokli, lai varētu to pārbaudīt savā tālrunī.
+    Iestatīšana ir iespējama tikai ar īpašu programmatūru.
+  </p>
+  <p>
+    <a href="https://github.com/Panteliemon/Water">Pirmkods</a>
+  </p>
+}
+
+
+@{
+  Layout = "Layout";
+}
+
+@section Styles
+{
+  <style type="text/css">
+    .gallery > img {
+      max-height: 300px;
+      object-fit: contain;
+    }
+    .gallery > img:not(:first-child) {
+      margin-left: var(--step);
+    }
+    @@media only screen and (max-width: 820px) {
+      .gallery {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .gallery > img {
+        max-width: 100%;
+      }
+      .gallery > img:not(:first-child) {
+        margin-top: var(--step);
+        margin-left: unset;
+      }
+    }
+  </style>
+}

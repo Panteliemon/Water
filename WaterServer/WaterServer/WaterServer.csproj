@@ -9,4 +9,9 @@
     <ProjectReference Include="..\WaterServer.Model\WaterServer.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>

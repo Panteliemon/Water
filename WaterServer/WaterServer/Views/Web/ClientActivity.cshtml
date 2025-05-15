@@ -1,0 +1,144 @@
+﻿@using WaterServer.Utils
+@using WaterServer.ViewModels
+@model WaterServer.ViewModels.ClientActivityPageVm
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <h1>Device Activity</h1>
+}
+else
+{
+  <h1>Ierīces aktivitāte</h1>
+}
+
+<div id="noRecordsDiv" class="no-records margin-top" style="display:none;">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>No records</text>
+  }
+  else
+  {
+    <text>Nav datu</text>
+  }
+</div>
+
+<table id="mainTable" style="display:none;" class="margin-top">
+  <thead>
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <th>Date/Time</th>
+      <th>Type</th>
+    }
+    else
+    {
+      <th>Datums/Laiks</th>
+      <th>Tips</th>
+    }
+  </thead>
+  <tbody>
+    <!-- ko foreach: viewModel.tableRows -->
+    <tr>
+      <td>
+        <p data-bind="text: utcTimeStamp.toLocaleString()"></p>
+      </td>
+      <td>
+        <p data-bind="text: activityTypeToStr(activityType), class: activityTypeToClass(activityType)"></p>
+      </td>
+    </tr>
+    <!-- /ko -->
+  </tbody>
+</table>
+
+<script>
+  let rowsInitial = [
+  @{
+    for (int i = 0; i < Model.TableRows.Count; i++)
+    {
+      ClientActivityRowVm row = Model.TableRows[i];
+      if (i == Model.TableRows.Count - 1)
+      {
+  <text>    { utcTimeStamp: new Date(@(row.UtcTimeStamp.UtcToJsMilliseconds())), activityType: @((int)row.ActivityType) }
+  </text>
+      }
+      else
+      {
+  <text>    { utcTimeStamp: new Date(@(row.UtcTimeStamp.UtcToJsMilliseconds())), activityType: @((int)row.ActivityType) },
+  </text>
+      }
+
+    }
+  }
+  ];
+
+  let viewModel = {
+    tableRows: ko.observable([]),
+  };
+
+  ko.applyBindings(viewModel);
+</script>
+
+@if ((string)ViewData["Lang"] == "EN")
+{
+  <script>
+    function activityTypeToStr(activityType) {
+      switch (activityType) {
+        case 1: return "Requested";
+        case 2: return "Completed";
+        case 3: return "Error";
+        default: return "Unknown";
+      }
+    }
+  </script>
+}
+else
+{
+  <script>
+    function activityTypeToStr(activityType) {
+      switch (activityType) {
+        case 1: return "Pieprasīts";
+        case 2: return "Izpildīts";
+        case 3: return "Kļūda";
+        default: return "Nezināms";
+      }
+    }
+  </script>
+}
+
+<script>
+  function activityTypeToClass(activityType) {
+    switch (activityType) {
+      case 1:
+      case 2: return "";
+      default: return "is-error";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (rowsInitial.length == 0) {
+      document.getElementById("noRecordsDiv").style.display = "block";
+      document.getElementById("mainTable").style.display = "none";
+    } else {
+      document.getElementById("noRecordsDiv").style.display = "none";
+      document.getElementById("mainTable").style.display = "table";
+    }
+
+    viewModel.tableRows(rowsInitial);
+  });
+</script>
+
+@{
+  Layout = "Layout";
+}
+
+@section Styles
+{
+  <style type="text/css">
+    th {
+      font-weight: bold;
+    }
+    
+    .is-error {
+      background: var(--error);
+    }
+  </style>
+}

@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width" />
+  <title>@ViewData["Title"]</title>
+  <link rel="stylesheet" href="~/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-latest.js" integrity="sha512-2AL/VEauKkZqQU9BHgnv48OhXcJPx9vdzxN1JrKDVc4FPU/MEE/BZ6d9l0mP7VmvLsjtYwqiYQpDskK9dG8KBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="~/scripts.js"></script>
+  @RenderSection("Styles", required: false)
+</head>
+<body>
+  <header>
+    <img class="logo-bg" src="~/logo-bg.jpg" />
+    <img class="logo-fg" src="~/logo-fg.png" alt="Bn Waterer 2" title="Bn Waterer 2" />
+    <div class="motto">
+      @if ((string)ViewData["Lang"] == "EN")
+      {
+        <p>Water your plants without gettin up from your chair!</p>
+        <p>OR: when on vacation</p>
+      }
+      else
+      {
+        <p>Laisti savus augus bez piecelšanās no krēsla!</p>
+        <p>VAI: atvaļinājumā</p>
+      }
+    </div>
+  </header>
+  <nav>
+    <div class="links">
+      @if ((string)ViewData["Lang"] == "EN")
+      {
+        <a href="/en" class="@(ViewData["/"] != null ? "selected" : "")">Tasks</a><a href="/activity/en" class="@(ViewData["/activity"] != null ? "selected" : "")">Device Activity</a><a href="/about/en" class="@(ViewData["/about"] != null ? "selected" : "")">About</a>
+      }
+      else
+      {
+        <a href="/" class="@(ViewData["/"] != null ? "selected" : "")">Uzdevumi</a><a href="/activity" class="@(ViewData["/activity"] != null ? "selected" : "")">Ierīces Aktivitāte</a><a href="/about" class="@(ViewData["/about"] != null ? "selected" : "")">Par</a>
+      } 
+    </div>
+    <div class="languages">
+      <a href="@ViewData["LvLink"]" class="@((string)ViewData["Lang"] == "LV" ? "selected" : "")">LV</a><a href="@ViewData["EnLink"]" class="@((string)ViewData["Lang"] == "EN" ? "selected" : "")">EN</a>
+    </div>
+  </nav>
+  <section class="main">
+    @RenderBody()
+  </section>
+  <footer>
+    @RenderSection("Attributions", required: false)
+    <p>© Bn Entertainment, 2025</p>
+  </footer>
+</body>
+</html>
+
+@{
+}
