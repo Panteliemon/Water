@@ -1,4 +1,6 @@
 ﻿@model WaterServer.ViewModels.IndexVm
+@using WaterServer.ModelSimple
+@using WaterServer.Utils
 
 @if ((string)ViewData["Lang"] == "EN")
 {
@@ -90,7 +92,13 @@ else
       @for (int i = 0; i < Model.Plants.Count; i++)
       {
         <th>
-          <p class="plant-no">@Model.Plants[i].ValveNo</p>
+          <span class="plant-no">@Model.Plants[i].ValveNo</span>
+          @if (!string.IsNullOrEmpty(Model.Plants[i].GetImgSrc()))
+          {
+            <img class="planticon" src="@Model.Plants[i].GetImgSrc()"
+                 alt="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])"
+                 title="@Model.Plants[i].GetImgAlt((string)ViewData["Lang"])" />
+          }
         </th>
       }
     </tr>
@@ -143,9 +151,43 @@ else
   </tbody>
 </table>
 
+<input hidden value="@(Model.UtcLastClientActivity?.UtcToJsMilliseconds() ?? 0)" id="hLastActivity" />
+@if (Model.UtcLastClientActivity.HasValue)
+{
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Latest device's activity: </span>
+    }
+    else
+    {
+      <span>Pēdējā ierīces aktivitāte: </span>
+    }
+    <span data-bind="text: viewModel.lastActivityStr"></span>
+  </p>
+}
+
+<input hidden value="@(Model.CountsPerLiter ?? 0)" id="hCountsPerLiter" />
+@if (Model.CountsPerLiter.HasValue)
+{
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Currently used counts per liter: </span>
+    }
+    else
+    {
+      <span>Šobrīd lietoti skaiti litrā: </span>
+    }
+    <span data-bind="text: viewModel.countsPerLiter"></span>
+  </p>
+}
+
 <script>
   let viewModel = {
-    tableRows: ko.observable([])
+    tableRows: ko.observable([]),
+    lastActivityStr: ko.observable(""),
+    countsPerLiter: ko.observable(0)
   };
 
   ko.applyBindings(viewModel);
@@ -300,6 +342,11 @@ else
   document.addEventListener("DOMContentLoaded", async () => {
     syncLanguageLinks();
 
+    let lastActivity = new Date(Number(document.getElementById("hLastActivity").value));
+    viewModel.lastActivityStr(lastActivity.toLocaleString());
+    let countsPerLiter = Number(document.getElementById("hCountsPerLiter").value);
+    viewModel.countsPerLiter(countsPerLiter);
+
     let buttons1 = [...document.querySelectorAll("#swShowAllTasks > button")];
     for (let i = 0; i < buttons1.length; i++) {
       buttons1[i].addEventListener("click", () => setShowAllTasks(i));
@@ -344,11 +391,44 @@ else
     .status-error {
       background: var(--error);
     }
+
+    .planticon {
+      height: 32px;
+      width: 32px;
+      object-fit: none;
+      margin-left: var(--step);
+    }
   </style>
 }
 
 @section Attributions
 {
-  <a href="https://www.flaticon.com/free-icons/tomato" title="tomato icons">Tomato icons created by Freepik - Flaticon</a>
-  <a href="https://www.flaticon.com/free-icons/pepper" title="pepper icons">Pepper icons created by Freepik - Flaticon</a>
+  <p>
+    <a href="https://www.flaticon.com/free-icons/tomato"
+       class="attribution"
+       title="tomato icons">
+      Tomato icons created by Freepik - Flaticon
+    </a>
+  </p>
+  @if (Model.Plants.Any(p => p.PlantType == SPlantType.CayennePepper))
+  {
+    <p>
+      <a href="https://www.flaticon.com/free-icons/pepper"
+         class="attribution"
+         title="pepper icons">
+        Pepper icons created by Freepik - Flaticon
+      </a>
+    </p>
+  }
+  @if (Model.Plants.Any(p => p.PlantType == SPlantType.Drain))
+  {
+    <p>
+      <a href="https://www.flaticon.com/free-icons/sewage"
+         class="attribution"
+         title="sewage icons">
+        Sewage icons created by Freepik - Flaticon
+      </a>
+    </p>
+  }
+  <div style="height:5px;"></div>
 }

@@ -121,6 +121,22 @@ nav a.selected:link, nav a.selected:visited, nav a.selected:hover {
   color: var(--text);
 }
 
+a:link, a:visited {
+  color: var(--text);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:active {
+  color: var(--headers);
+  text-decoration: underline;
+}
+
+a.attribution {
+  font-size: 12px;
+}
+
 p {
   margin: 0;
 }
