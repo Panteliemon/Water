@@ -57,6 +57,7 @@ public class Program
                 {
                     listenOptions.UseHttps(certificate);
                 });
+                options.Listen(IPAddress.Any, 80);
             });
         }
 
