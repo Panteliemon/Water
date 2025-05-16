@@ -31,7 +31,7 @@ public class Program
             string passwordPath = Path.Combine(secretsFolderPath, "pass.txt");
             string password = File.ReadAllText(passwordPath).Trim();
             X509Certificate2 certificate = //X509Certificate2.CreateFromPemFile(certPath, keyPath);
-                new X509Certificate2(pfxPath, password);
+                new X509Certificate2(pfxPath, "");
 
             builder.WebHost.ConfigureKestrel(options =>
             {
