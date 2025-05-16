@@ -52,7 +52,9 @@ public class Program
 
             builder.WebHost.ConfigureKestrel(options =>
             {
+                
                 options.Limits.MaxRequestBodySize = 1 << 20;
+                options.Listen(IPAddress.Any, 80);
                 options.Listen(IPAddress.Any, 443, listenOptions =>
                 {
                     listenOptions.UseHttps(certificate);
