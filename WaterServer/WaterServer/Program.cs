@@ -69,7 +69,7 @@ public class Program
         // To load parameters and display possible warnings immediately
         app.Services.GetRequiredService<IWaterConfig>();
 
-        //app.UseHsts();
+        app.UseHsts();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.AddCustomAuthenticator();
