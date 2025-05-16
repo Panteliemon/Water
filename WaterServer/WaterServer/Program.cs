@@ -83,6 +83,10 @@ public class Program
     private static void AddServices(IServiceCollection services)
     {
         services.AddControllersWithViews();
+        services.AddHttpsRedirection(options =>
+        {
+            options.HttpsPort = 443;
+        });
         services.AddSingleton<IWaterConfig, WaterConfig>();
         services.AddSingleton<ICriticalSection, CriticalSection>();
     }
