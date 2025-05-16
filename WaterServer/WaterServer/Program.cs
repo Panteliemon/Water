@@ -55,7 +55,6 @@ public class Program
                 
                 options.Limits.MaxRequestBodySize = 1 << 20;
                 options.Listen(IPAddress.Any, 80);
-                options.Listen(IPAddress.Any, 8080);
                 options.Listen(IPAddress.Any, 443, listenOptions =>
                 {
                     listenOptions.UseHttps(certificate);
@@ -71,7 +70,7 @@ public class Program
         app.Services.GetRequiredService<IWaterConfig>();
 
         app.UseHsts();
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
         app.UseStaticFiles();
         app.AddCustomAuthenticator();
         app.MapControllers();
