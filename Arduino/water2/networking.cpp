@@ -14,7 +14,7 @@ const char *ssid = WIFI_SSID;
 const char *pass = WIFI_PASS;
 const char *apiKey = API_KEY;
 
-const char *serverDomain = "ec2-63-176-210-31.eu-central-1.compute.amazonaws.com";
+const char *serverDomain = "bn-water.lv";
 
 typedef enum {
   HS_OK = 0,
@@ -51,6 +51,7 @@ void initNetwork() {
 }
 
 HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response) {
+  Serial.println("Establishing TCP connection...");
   if (netClient.connect(serverDomain, 443)) {
     Serial.println("Sending HTTP request...");
     blinkFast(1);
@@ -108,6 +109,7 @@ HttpStatus sendPostRequest(const char *route, Buffer &message, Buffer *response)
       return HS_BADRESPONSE;
     }
   } else {
+    Serial.println("FAIL");
     blinkFast(20);
 
     return HS_NETWORKERROR;
