@@ -27,7 +27,11 @@ public class Program
         {
             string certPath = Path.Combine(secretsFolderPath, builder.Configuration["App:CertBaseName"] + ".crt");
             string keyPath = Path.Combine(secretsFolderPath, builder.Configuration["App:CertBaseName"] + ".key");
-            X509Certificate2 certificate = X509Certificate2.CreateFromPemFile(certPath, keyPath);
+            string pfxPath = Path.Combine(secretsFolderPath, builder.Configuration["App:CertBaseName"] + ".pfx");
+            string passwordPath = Path.Combine(secretsFolderPath, "pass.txt");
+            string password = File.ReadAllText(passwordPath).Trim();
+            X509Certificate2 certificate = //X509Certificate2.CreateFromPemFile(certPath, keyPath);
+                new X509Certificate2(pfxPath, password);
 
             builder.WebHost.ConfigureKestrel(options =>
             {
