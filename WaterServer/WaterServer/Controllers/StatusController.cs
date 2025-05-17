@@ -70,14 +70,18 @@ public class StatusController : ControllerBase
 
         if (model.LastClientActivity != null)
         {
-            if (result.FirstOrDefault(ca => (ca.UtcTimeStamp == model.LastClientActivity.UtcTimeStamp)
-                                            && (ca.ActivityType == model.LastClientActivity.ActivityType)) == null)
+            // Filter!
+            if ((!from.HasValue) || (model.LastClientActivity.UtcTimeStamp >= from))
             {
-                result.Add(new ClientActivityRowVm()
+                if (result.FirstOrDefault(ca => (ca.UtcTimeStamp == model.LastClientActivity.UtcTimeStamp)
+                                                && (ca.ActivityType == model.LastClientActivity.ActivityType)) == null)
                 {
-                    UtcTimeStamp = model.LastClientActivity.UtcTimeStamp,
-                    ActivityType = model.LastClientActivity.ActivityType
-                });
+                    result.Add(new ClientActivityRowVm()
+                    {
+                        UtcTimeStamp = model.LastClientActivity.UtcTimeStamp,
+                        ActivityType = model.LastClientActivity.ActivityType
+                    });
+                }
             }
         }
 
