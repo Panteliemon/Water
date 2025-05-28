@@ -18,6 +18,21 @@ public class STask
         return (Items != null) && Items.Any(item => item.IsReadyForExecution());
     }
 
+    public void TransferStatusFrom(STask sourceTask)
+    {
+        if ((sourceTask != null) && (Items != null) && (sourceTask.Items != null))
+        {
+            foreach (STaskItem item in Items)
+            {
+                STaskItem sourceItem = sourceTask.Items.FirstOrDefault(x => x.Plant == item.Plant);
+                if (sourceItem != null)
+                {
+                    item.Status = sourceItem.Status;
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Doesn't change links to plants!
     /// </summary>
@@ -56,7 +71,7 @@ public class STask
             }
             else // t1.UtcValidTo > t2.UtcValidTo
             {
-                return CompareNestedTasksByExecutionOrder(t2, t1, atTimeUtc);
+                return -CompareNestedTasksByExecutionOrder(t2, t1, atTimeUtc);
             }
         }
         else if (t1.UtcValidFrom > t2.UtcValidFrom)

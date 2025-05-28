@@ -150,6 +150,9 @@ public class SetupController : ControllerBase
                 return validationResult;
 
             // Approved.
+            // Preserve status of previously existing items
+            updated.TransferStatusFrom(model.Tasks[taskIndex]);
+
             model.Tasks[taskIndex] = updated;
             await repository.WriteAll(model);
             return Ok();
