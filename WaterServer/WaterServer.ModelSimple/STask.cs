@@ -56,7 +56,7 @@ public class STask
             }
             else // t1.UtcValidTo > t2.UtcValidTo
             {
-                return CompareNestedTasksByExecutionOrder(t2, t1, atTimeUtc);
+                return -CompareNestedTasksByExecutionOrder(t2, t1, atTimeUtc);
             }
         }
         else if (t1.UtcValidFrom > t2.UtcValidFrom)
