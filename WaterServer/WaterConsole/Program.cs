@@ -1040,7 +1040,7 @@ internal class Program
     {
         if (!model.Plants.Any(p => p.HasStandardVolume))
         {
-            InColorLn(INFO, $"There are no plants with Standard Volume ml or Offset specified. 'std' command cannot do anything.");
+            InColorLn(INFO, $"There are no plants with Standard Volume ml or Offset specified. Current command cannot do anything.");
             return;
         }
 
