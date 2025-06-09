@@ -13,4 +13,8 @@ public class PlantDto
     public int Index { get; set; }
     [XmlAttribute]
     public int PlantType { get; set; }
+    [XmlAttribute]
+    public string StdVolumeMl { get; set; }
+    [XmlAttribute]
+    public string OffsetMl { get; set; }
 }

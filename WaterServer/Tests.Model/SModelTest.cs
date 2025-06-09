@@ -20,7 +20,9 @@ public class SModelTest
         model.Plants.Add(new SPlant()
         {
             Index = 3,
-            PlantType = SPlantType.Tomato
+            PlantType = SPlantType.Tomato,
+            StandardVolumeMl = 1500,
+            OffsetMl = 0
         });
         model.Tasks.Add(new STask()
         {
@@ -56,6 +58,8 @@ public class SModelTest
 
         Assert.Equal(3, model2.Plants[0].Index);
         Assert.Equal(SPlantType.Tomato, model2.Plants[0].PlantType);
+        Assert.Equal(1500, model2.Plants[0].StandardVolumeMl);
+        Assert.Equal(0, model2.Plants[0].OffsetMl);
 
         Assert.Equal(123, model2.Tasks[0].Id);
         Assert.Equal(new DateTime(2025, 4, 30, 12, 0, 0, DateTimeKind.Utc), model2.Tasks[0].UtcValidFrom);

@@ -35,7 +35,8 @@ public class XmlTest
         model.Plants.Add(new SPlant()
         {
             Index = 3,
-            PlantType = SPlantType.Tomato
+            PlantType = SPlantType.Tomato,
+            StandardVolumeMl = 1200
         });
         model.Tasks.Add(new STask()
         {
@@ -77,6 +78,8 @@ public class XmlTest
 
         Assert.Equal(3, model2.Plants[0].Index);
         Assert.Equal(SPlantType.Tomato, model2.Plants[0].PlantType);
+        Assert.Equal(1200, model2.Plants[0].StandardVolumeMl);
+        Assert.Null(model2.Plants[0].OffsetMl);
 
         Assert.Equal(123, model2.Tasks[0].Id);
         Assert.Equal(new DateTime(2025, 4, 30, 12, 0, 0, DateTimeKind.Utc), model2.Tasks[0].UtcValidFrom);
@@ -165,6 +168,8 @@ public class XmlTest
 
         Assert.Equal(1, plant2.Index);
         Assert.Equal(SPlantType.Tomato, plant2.PlantType);
+        Assert.Null(plant2.StandardVolumeMl);
+        Assert.Null(plant2.OffsetMl);
     }
 }
 

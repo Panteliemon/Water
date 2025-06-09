@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -512,6 +513,89 @@ internal static class StringUtils
 
     #endregion
 
+    public static Tuple<double, double> ParseStdMultiplier(string str)
+    {
+        List<string> lexems = ParseStdMultiplier_Split(str);
+        if (lexems.Count == 1)
+        {
+            if (double.TryParse(lexems[0], CultureInfo.InvariantCulture, out double multiplier))
+                return new Tuple<double, double>(multiplier, 1.0);
+        }
+        else if ((lexems.Count == 3) && (lexems[1] == "/"))
+        {
+            if (double.TryParse(lexems[0], CultureInfo.InvariantCulture, out double numerator)
+                && double.TryParse(lexems[2], CultureInfo.InvariantCulture, out double denominator))
+            {
+                if (denominator != 0.0)
+                {
+                    return new Tuple<double, double>(numerator, denominator);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    #region ParseStdMultiplier
+
+    private static List<string> ParseStdMultiplier_Split(string str)
+    {
+        List<string> result = new();
+        StringBuilder sb = null;
+
+        int state = 0;
+        for (int i = 0; i < str.Length; i++)
+        {
+            char c = str[i];
+            switch (state)
+            {
+                case 0:
+                    if (c == '/')
+                    {
+                        result.Add("/");
+                    }
+                    else if (char.IsWhiteSpace(c))
+                    {
+                        // :)
+                    }
+                    else
+                    {
+                        sb = new StringBuilder();
+                        sb.Append(c);
+                        state = 1;
+                    }
+                    break;
+
+                case 1:
+                    if (c == '/')
+                    {
+                        result.Add(sb.ToString());
+                        sb = null;
+                        result.Add("/");
+                        state = 0;
+                    }
+                    else if (char.IsWhiteSpace(c))
+                    {
+                        result.Add(sb.ToString());
+                        sb = null;
+                        state = 0;
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+                    break;
+            }
+        }
+
+        if (state == 1)
+            result.Add(sb.ToString());
+
+        return result;
+    }
+
+    #endregion
+
     public static List<string> SplitIntoLines(string str)
     {
         List<string> result = new List<string>();
@@ -588,5 +672,13 @@ internal static class StringUtils
         }
 
         return "[???]";
+    }
+
+    public static string StandardVolumeToStr(int? value)
+    {
+        if (value.HasValue)
+            return value.Value.ToString();
+        else
+            return "[NOT SET]";
     }
 }

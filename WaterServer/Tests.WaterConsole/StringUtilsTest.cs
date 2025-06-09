@@ -503,4 +503,93 @@ public class StringUtilsTest
         Tuple<DateTime, DateTime> parsed = StringUtils.ParseTaskTime("a 3:00 - 29:60", new DateTime(2025, 5, 5));
         Assert.Null(parsed);
     }
+
+    [Fact]
+    public void ParseStdMultiplier_XY1()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("2/4");
+        Assert.NotNull(parsed);
+        Assert.Equal(2.0, parsed.Item1);
+        Assert.Equal(4.0, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_XY2()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("  2 / 4  ");
+        Assert.NotNull(parsed);
+        Assert.Equal(2.0, parsed.Item1);
+        Assert.Equal(4.0, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_XY3()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("  -2 /-4  ");
+        Assert.NotNull(parsed);
+        Assert.Equal(-2.0, parsed.Item1);
+        Assert.Equal(-4.0, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_XY4()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("  333.333 /-10.5  ");
+        Assert.NotNull(parsed);
+        Assert.Equal(333.333, parsed.Item1);
+        Assert.Equal(-10.5, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_X1()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("42");
+        Assert.NotNull(parsed);
+        Assert.Equal(42.0, parsed.Item1);
+        Assert.Equal(1.0, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_X2()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("  43.33 ");
+        Assert.NotNull(parsed);
+        Assert.Equal(43.33, parsed.Item1);
+        Assert.Equal(1.0, parsed.Item2);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_Fail1()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("w");
+        Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_Fail2()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("1/0");
+        Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_Fail3()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("2//3");
+        Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_Fail4()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier(" 1 2");
+        Assert.Null(parsed);
+    }
+
+    [Fact]
+    public void ParseStdMultiplier_Fail5()
+    {
+        Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("5/6 + +");
+        Assert.Null(parsed);
+    }
 }
