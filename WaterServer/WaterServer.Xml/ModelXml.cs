@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -127,7 +128,9 @@ public static class ModelXml
         return new PlantDto()
         {
             Index = plant.Index,
-            PlantType = (int)plant.PlantType
+            PlantType = (int)plant.PlantType,
+            StdVolumeMl = plant.StandardVolumeMl.HasValue ? plant.StandardVolumeMl.Value.ToString(CultureInfo.InvariantCulture) : null,
+            OffsetMl = plant.OffsetMl.HasValue ? plant.OffsetMl.Value.ToString(CultureInfo.InvariantCulture) : null
         };
     }
 
@@ -235,7 +238,9 @@ public static class ModelXml
         SPlant result = new()
         {
             Index = dto.Index,
-            PlantType = (SPlantType)dto.PlantType
+            PlantType = (SPlantType)dto.PlantType,
+            StandardVolumeMl = StringToNullableInt(dto.StdVolumeMl),
+            OffsetMl = StringToNullableInt(dto.OffsetMl)
         };
 
         if (result.Index < 0)
@@ -245,6 +250,22 @@ public static class ModelXml
 
         if (!Enum.IsDefined(typeof(SPlantType), result.PlantType))
             result.PlantType = SPlantType.Unused;
+
+        if (result.StandardVolumeMl.HasValue)
+        {
+            if (result.StandardVolumeMl.Value < 0)
+                result.StandardVolumeMl = null;
+            else if (result.StandardVolumeMl.Value > SPlant.MAX_STD_VOLUMEML)
+                result.StandardVolumeMl = SPlant.MAX_STD_VOLUMEML;
+        }
+
+        if (result.OffsetMl.HasValue)
+        {
+            if (result.OffsetMl.Value < -SPlant.MAX_OFFSETML)
+                result.OffsetMl = -SPlant.MAX_OFFSETML;
+            else if (result.OffsetMl.Value > SPlant.MAX_OFFSETML)
+                result.OffsetMl = SPlant.MAX_OFFSETML;
+        }
 
         return result;
     }
@@ -299,6 +320,17 @@ public static class ModelXml
             result.ActivityType = SClientActivityType.Unknown;
 
         return result;
+    }
+
+    private static int? StringToNullableInt(string str)
+    {
+        if ((!string.IsNullOrEmpty(str))
+            && int.TryParse(str, CultureInfo.InvariantCulture, out int parsed))
+        {
+            return parsed;
+        }
+
+        return null;
     }
 
     #endregion

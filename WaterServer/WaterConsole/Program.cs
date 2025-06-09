@@ -478,6 +478,8 @@ internal class Program
             GridBuilder gb = new();
             gb[0, 0] = "Valve No";
             gb[0, 1] = "Type";
+            gb[0, 2] = "Std Volume ml";
+            gb[0, 3] = "Offset ml";
             gb.ColumnSeparator = "   ";
             gb.HeaderRowSeparator = '-';
 
@@ -485,6 +487,8 @@ internal class Program
             {
                 gb[i + 1, 0] = model.Plants[i].ValveNo.ToString();
                 gb[i + 1, 1] = model.Plants[i].PlantType.ToString();
+                gb[i + 1, 2] = StringUtils.StandardVolumeToStr(model.Plants[i].StandardVolumeMl);
+                gb[i + 1, 3] = StringUtils.StandardVolumeToStr(model.Plants[i].OffsetMl);
             }
 
             InColorLn(INFO, gb.ToString());
@@ -578,12 +582,28 @@ internal class Program
         SPlantType newType = QueryEnum("Enter new Type:",
             Enum.GetValues<SPlantType>().Where(x => x != SPlantType.Unused));
 
+        int? stdVolumeMl = QueryGenericInt("Enter Standard Volume ml", 0, SPlant.MAX_STD_VOLUMEML, true);
+        if (!stdVolumeMl.HasValue)
+            return;
+        if (stdVolumeMl == 0)
+            stdVolumeMl = null;
+
+        int? offsetMl = QueryGenericInt("Enter Offset ml", -SPlant.MAX_OFFSETML, SPlant.MAX_OFFSETML, true);
+        if (!offsetMl.HasValue)
+            return;
+        if (offsetMl == 0)
+            offsetMl = null;
+
         InColorLn(INFO, $"Valve Number: {plant.ValveNo}");
         InColorLn(INFO, $"Type: {plant.PlantType} -> {newType}");
+        InColorLn(INFO, $"Standard Volume ml: {StringUtils.StandardVolumeToStr(plant.StandardVolumeMl)} -> {StringUtils.StandardVolumeToStr(stdVolumeMl)}");
+        InColorLn(INFO, $"Offset ml: {StringUtils.StandardVolumeToStr(plant.OffsetMl)} -> {StringUtils.StandardVolumeToStr(offsetMl)}");
 
         if (AskYesNo("Save to server?"))
         {
             plant.PlantType = newType;
+            plant.StandardVolumeMl = stdVolumeMl;
+            plant.OffsetMl = offsetMl;
             if (NetworkingWrapper("Sending data...", () =>
                 {
                     connector.UpdatePlant(plant);
@@ -786,6 +806,10 @@ internal class Program
             {
                 EditTaskMode_ExecutePlant(cmd.Parameters, actual);
             }
+            else if (cmd.NameLower == "st")
+            {
+                EditTaskMode_ExecuteStd(cmd.Parameters, actual);
+            }
             else if (cmd.NameLower == "d")
             {
                 EditTaskMode_ExecuteDates(cmd.Parameters, actual);
@@ -853,6 +877,22 @@ internal class Program
             PrintInFormatBraces("valveNo", USERINPUT);
             Console.Write(" ");
             PrintInFormatBraces("amount", USERINPUT);
+            Console.WriteLine();
+
+            Console.Write("  ");
+            InColor(USERINPUT, "st");
+            Console.WriteLine(" - set all plants within task to some fraction of their Standard Volume. Options:");
+
+            Console.Write("  ");
+            InColor(USERINPUT, "st ");
+            PrintInFormatBraces("multiplier", USERINPUT);
+            Console.WriteLine();
+
+            Console.Write("  ");
+            InColor(USERINPUT, "st ");
+            PrintInFormatBraces("numerator", USERINPUT);
+            Console.Write("/");
+            PrintInFormatBraces("denominator", USERINPUT);
             Console.WriteLine();
 
             Console.Write("  ");
@@ -993,6 +1033,56 @@ internal class Program
             }
 
             item.VolumeMl = volumeMl;
+        }
+    }
+
+    static void EditTaskMode_ExecuteStd(IReadOnlyList<string> parameters, STask task)
+    {
+        if (!model.Plants.Any(p => p.HasStandardVolume))
+        {
+            InColorLn(INFO, $"There are no plants with Standard Volume ml or Offset specified. Current command cannot do anything.");
+            return;
+        }
+
+        Tuple<double, double> ratio = null;
+        if (parameters.Count > 0)
+        {
+            string glued = string.Join(" ", parameters);
+            ratio = StringUtils.ParseStdMultiplier(glued);
+            if (ratio == null)
+            {
+                InColorLn(WARNING, $"Invalid multiplier or fraction: {glued}");
+            }
+        }
+        else
+        {
+            InColorLn(REQUEST, $"Specify multiplier as single number or as a fraction:");
+            InColor(REQUEST, "> ");
+
+            string str = Console.ReadLine().Trim();
+            ratio = StringUtils.ParseStdMultiplier(str);
+            if (ratio == null)
+            {
+                InColorLn(WARNING, $"Invalid multiplier or fraction: {str}");
+            }
+        }
+
+        if (ratio != null)
+        {
+            double multiplier = ratio.Item1 / ratio.Item2;
+            foreach (SPlant plant in model.Plants)
+            {
+                if (plant.HasStandardVolume)
+                {
+                    int volumeMl = plant.GetStandardVolume(multiplier) ?? 0; // not null when "has standard volume"
+                    InColorLn(INFO, $"Valve No {plant.ValveNo}: {volumeMl} ml");
+                    ApplyVolumeToTask(task, plant, volumeMl);
+                }
+                else
+                {
+                    InColorLn(INFO, $"Valve No {plant.ValveNo}: skipped");
+                }
+            }
         }
     }
 
@@ -1180,7 +1270,76 @@ internal class Program
                 InColor(USERINPUT, "c");
                 InColor(WARNING, " or ");
                 InColor(USERINPUT, "cancel");
-                InColorLn(WARNING, " for canceling the operation.");
+                InColorLn(WARNING, " to cancel the operation.");
+            }
+            else
+            {
+                Console.WriteLine();
+            }
+        }
+    }
+
+    static int? QueryGenericInt(string prompt, int? min = null, int? max = null, bool allowCancel = false)
+    {
+        while (true)
+        {
+            InColor(REQUEST, () =>
+            {
+                Console.Write(prompt);
+                if (min.HasValue)
+                {
+                    if (max.HasValue)
+                        Console.WriteLine($" ({min.Value}..{max.Value}):");
+                    else
+                        Console.WriteLine($" (from {min.Value}):");
+                }
+                else if (max.HasValue)
+                {
+                    Console.WriteLine($" (up to {max.Value}):");
+                }
+                else
+                {
+                    Console.WriteLine();
+                }
+
+                Console.Write("> ");
+            });
+
+            string str = Console.ReadLine().Trim();
+            string lower = str.ToLower();
+            if (allowCancel && ((lower == "c") || (lower == "cancel")))
+                return null;
+
+            if (int.TryParse(str, out int parsed))
+            {
+                if (min.HasValue && (parsed < min.Value))
+                {
+                    InColor(WARNING, $"Value should not be less than {min.Value}");
+                }
+                else
+                {
+                    if (max.HasValue && (parsed > max.Value))
+                    {
+                        InColor(WARNING, $"Value should not be greater than {max.Value}");
+                    }
+                    else
+                    {
+                        return parsed;
+                    }
+                }
+            }
+            else
+            {
+                InColor(WARNING, "Please enter integer number");
+            }
+
+            if (allowCancel)
+            {
+                InColor(WARNING, ". Or use ");
+                InColor(USERINPUT, "c");
+                InColor(WARNING, " or ");
+                InColor(USERINPUT, "cancel");
+                InColorLn(WARNING, " to cancel the operation.");
             }
             else
             {

@@ -60,6 +60,8 @@ public class SetupController : ControllerBase
             }
 
             existingPlant.PlantType = plant.PlantType;
+            existingPlant.StandardVolumeMl = plant.StandardVolumeMl;
+            existingPlant.OffsetMl = plant.OffsetMl;
 
             await repository.WriteAll(model);
             return Ok();
