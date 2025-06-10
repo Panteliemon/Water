@@ -29,7 +29,7 @@ void Buffer::setLength(int value) {
 
   if (value > _allocatedLength) {
     int newAllocatedLength = _allocatedLength << 1;
-    while (value > _allocatedLength) {
+    while (value > newAllocatedLength) {
       newAllocatedLength <<= 1;
     }
 
