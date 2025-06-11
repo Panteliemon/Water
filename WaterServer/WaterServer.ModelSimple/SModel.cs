@@ -113,4 +113,26 @@ public class SModel
             return candidates[0];
         }
     }
+
+    public int? GetWaterConsumptionMl()
+    {
+        if ((Tasks == null) || (!UtcWaterConsumptionStart.HasValue))
+            return null;
+
+        int resultMl = 0;
+        foreach (STask task in Tasks)
+        {
+            if ((task.UtcValidFrom >= UtcWaterConsumptionStart.Value)
+                && (task.Items != null))
+            {
+                foreach (STaskItem taskItem in task.Items)
+                {
+                    if (taskItem.Status == STaskStatus.Success)
+                        resultMl += taskItem.VolumeMl;
+                }
+            }
+        }
+
+        return resultMl;
+    }
 }
