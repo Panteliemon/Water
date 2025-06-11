@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using WaterServer.ModelSimple;
@@ -117,6 +118,10 @@ internal class Program
                 else if (cmd.NameLower == "nt")
                 {
                     ExecuteAddTask(cmd.Parameters);
+                }
+                else if (cmd.NameLower == "wcs")
+                {
+                    ExecuteWaterConsumptionStart(cmd.Parameters);
                 }
 #if DEBUG
                 else if (cmd.NameLower == "fail")
@@ -423,6 +428,20 @@ internal class Program
             Console.WriteLine(" - add task valid from tomorrow 9:00 am till tomorrow 1:00 pm.");
             InColor(USERINPUT, "            nt 15/5/25 8 - 16/5/2025 5:59");
             Console.WriteLine(" - add task valid from May 15 2025 8:00 till May 16 2025 5:59.");
+
+            Console.WriteLine();
+            Console.WriteLine("Misc:");
+            InColorLn(USERINPUT, "  wcs");
+            InColor(USERINPUT, "  wcs ");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.WriteLine();
+            InColor(USERINPUT, "  wcs ");
+            PrintInFormatBraces("date", USERINPUT);
+            Console.Write(" ");
+            PrintInFormatBraces("time", USERINPUT);
+            Console.WriteLine();
+            InColorLn(USERINPUT, "  wcs null");
+            Console.WriteLine("    Sets water consumption start.");
 
             Console.WriteLine();
             Console.WriteLine("Colors:");
@@ -1114,6 +1133,103 @@ internal class Program
 
         List<STask> tasksAfter = new List<STask>() { actual };
         PrintTasks(tasksAfter, false, false);
+    }
+
+    static void ExecuteWaterConsumptionStart(IReadOnlyList<string> parameters)
+    {
+        if (!AutoPull())
+            return;
+        string strCurrentValue = model.UtcWaterConsumptionStart.HasValue
+            ? model.UtcWaterConsumptionStart.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)
+            : "null";
+        InColorLn(INFO, $"Current water consumption start: {strCurrentValue}");
+
+        bool parsedFromParams = false;
+        DateTime? newValue = null;
+        if (parameters.Count > 0)
+        {
+            string glued = string.Join(' ', parameters);
+            string gluedLower = glued.ToLower();
+            if (gluedLower == "null")
+            {
+                newValue = null;
+                parsedFromParams = true;
+            }
+            else
+            {
+                DateTime? parsed = StringUtils.ParseDateTime(glued, DateTime.Today);
+                if (!parsed.HasValue)
+                {
+                    InColorLn(WARNING, $"Invalid datetime: {glued}");
+                }
+                else
+                {
+                    newValue = DateTime.SpecifyKind(parsed.Value, DateTimeKind.Local);
+                    parsedFromParams = true;
+                }
+            }
+        }
+
+        if (!parsedFromParams)
+        {
+            InColorLn(REQUEST, $"Specify new water consumption start.");
+            InColorLn(REQUEST, $"Formats: dd/mm, dd/mm/yy, dd/mm hh, dd/mm hh:mm");
+            InColor(USERINPUT, $"null");
+            InColorLn(REQUEST, $" - reset value");
+            InColor(USERINPUT, $"c");
+            InColor(REQUEST, $" or ");
+            InColor(USERINPUT, $"cancel");
+            InColorLn(REQUEST, $" - cancel the operation");
+            InColor(REQUEST, "> ");
+
+            string str = Console.ReadLine().Trim();
+            if ((str == "c") || (str == "cancel"))
+                return;
+
+            if (str == "null")
+            {
+                newValue = null;
+            }
+            else
+            {
+                DateTime? parsed = StringUtils.ParseDateTime(str, DateTime.Today);
+                if (!parsed.HasValue)
+                {
+                    InColorLn(WARNING, $"Invalid datetime: {str}");
+                }
+                else
+                {
+                    newValue = DateTime.SpecifyKind(parsed.Value, DateTimeKind.Local);
+                }
+            }
+        }
+
+        string strNewValue = newValue.HasValue
+            ? newValue.Value.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture)
+            : "null";
+
+        InColorLn(INFO, $"New water consumption start: {strNewValue}");
+
+        bool save = AskYesNo("Save to server?");
+        if (save)
+        {
+            model.UtcWaterConsumptionStart = newValue?.ToUniversalTime();
+            if (NetworkingWrapper("Sending data...", () =>
+                {
+                    connector.SetWaterConsumptionStart(model.UtcWaterConsumptionStart);
+                }))
+            {
+                ExecutePull();
+            }
+            else
+            {
+                InColorLn(ERROR, "Set water consumption start aborted");
+            }
+        }
+        else
+        {
+            InColorLn(INFO, $"Aborted");
+        }
     }
 
     static void ExecuteViewTaskList(IReadOnlyList<string> parameters)

@@ -282,7 +282,44 @@ internal static class StringUtils
         }
     }
 
-    #region ParseTaskTime
+    public static DateTime? ParseDateTime(string str, DateTime today)
+    {
+        // <Input> ::= <D>
+        //             | <D> <T>
+        // <D> ::= <dd/MM>
+        //         | <dd/MM/yyyy>
+        // <T> ::= <hh>
+        //         | <hh:mm>
+
+        List<string> lexems = ParseTaskTime_Split(str);
+        if (lexems.Count == 0)
+            return null;
+
+        int pos = 0;
+
+        bool? dResult = ParseTaskTime_TryD(lexems, ref pos, out DateOnly dateComponent, today.Year);
+        if (dResult != true)
+            return null;
+
+        if (pos + 1 < lexems.Count)
+        {
+            pos++;
+            bool? tResult = ParseTaskTime_TryT(lexems, ref pos, out TimeOnly startTime);
+            if (tResult != true)
+                return null;
+
+            if (pos + 1 < lexems.Count)
+                return null;
+
+            return new DateTime(dateComponent, startTime);
+        }
+        else
+        {
+            return new DateTime(dateComponent, new TimeOnly(0, 0));
+        }
+    }
+
+    #region ParseTaskTime / DateTime
 
     // Syntax parsing:
     // - pos: initially: on first lexem (potentially) belonging to the syntax node

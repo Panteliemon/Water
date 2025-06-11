@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -94,6 +95,13 @@ internal class Connector
     public void DeleteTask(int id)
     {
         Task<HttpResponseMessage> responseTask = httpClientPrivate.DeleteAsync($"/setup/tasks/{id}");
+        ServerException.ThrowIfError(responseTask.Result);
+    }
+
+    public void SetWaterConsumptionStart(DateTime? utcValue)
+    {
+        string strValue = utcValue?.ToString("O", CultureInfo.InvariantCulture) ?? string.Empty;
+        Task<HttpResponseMessage> responseTask = httpClientPrivate.PostAsync("/setup/wcs", new StringContent(strValue));
         ServerException.ThrowIfError(responseTask.Result);
     }
 }

@@ -592,4 +592,67 @@ public class StringUtilsTest
         Tuple<double, double> parsed = StringUtils.ParseStdMultiplier("5/6 + +");
         Assert.Null(parsed);
     }
+
+    [Fact]
+    public void ParseDateTime_DShort()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime(" 11/6", new DateTime(2025, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2025, 6, 11, 0, 0, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DLong1()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11 / 6 / 25", new DateTime(2024, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2025, 6, 11, 0, 0, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DLong2()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11/6/2025", new DateTime(2024, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2025, 6, 11, 0, 0, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DTShort()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11/6 10", new DateTime(2025, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2025, 6, 11, 10, 0, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DTLong()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11/6 10:30", new DateTime(2025, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2025, 6, 11, 10, 30, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DLongTShort()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11/6/24 10", new DateTime(2025, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2024, 6, 11, 10, 0, 0), parsed.Value);
+    }
+
+    [Fact]
+    public void ParseDateTime_DLongTLong()
+    {
+        DateTime? parsed = StringUtils.ParseDateTime("11/6/2024 10:30", new DateTime(2025, 1, 1));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(new DateTime(2024, 6, 11, 10, 30, 0), parsed.Value);
+    }
 }
