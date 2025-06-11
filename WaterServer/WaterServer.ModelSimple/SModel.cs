@@ -26,6 +26,10 @@ public class SModel
     /// Last CPR reported by the client
     /// </summary>
     public int? LastCountsPerLiter { get; set; }
+    /// <summary>
+    /// Instance in time starting from which water consumption is calculated
+    /// </summary>
+    public DateTime? UtcWaterConsumptionStart { get; set; }
 
     public static SModel Empty()
     {
@@ -108,5 +112,27 @@ public class SModel
             candidates.Sort((t1, t2) => STask.CompareByExecutionOrder(t1, t2, utcDateTime));
             return candidates[0];
         }
+    }
+
+    public int? GetWaterConsumptionMl()
+    {
+        if ((Tasks == null) || (!UtcWaterConsumptionStart.HasValue))
+            return null;
+
+        int resultMl = 0;
+        foreach (STask task in Tasks)
+        {
+            if ((task.UtcValidFrom >= UtcWaterConsumptionStart.Value)
+                && (task.Items != null))
+            {
+                foreach (STaskItem taskItem in task.Items)
+                {
+                    if (taskItem.Status == STaskStatus.Success)
+                        resultMl += taskItem.VolumeMl;
+                }
+            }
+        }
+
+        return resultMl;
     }
 }

@@ -156,6 +156,40 @@ else
   </table>
 </div>
 
+@if (Model.WaterConsumptionLiters.HasValue)
+{
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Water consumption start: </span>
+    }
+    else
+    {
+      <span>Ūdens patēriņa sākums: </span>
+    }
+    <span data-bind="text: viewModel.waterConsumptionStart.toLocaleString()"></span>
+  </p>
+  <p class="margin-top">
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>Water consumed: </span>
+    }
+    else
+    {
+      <span>Patērēts ūdens: </span>
+    }
+    <span>@Model.StrWaterConsumptionLiters</span>
+    @if ((string)ViewData["Lang"] == "EN")
+    {
+      <span>liters</span>
+    }
+    else
+    {
+      <span>litri</span>
+    }
+  </p>
+}
+
 @if (Model.UtcLastClientActivity.HasValue)
 {
   <p class="margin-top">
@@ -190,7 +224,8 @@ else
   let viewModel = {
     tableRows: ko.observable([]),
     lastActivity: new Date(@(Model.UtcLastClientActivity?.UtcToJsMilliseconds() ?? 0)),
-    countsPerLiter: @(Model.CountsPerLiter ?? 0)
+    countsPerLiter: @(Model.CountsPerLiter ?? 0),
+    waterConsumptionStart: new Date(@(Model.UtcWaterConsumptionStart?.UtcToJsMilliseconds() ?? 0))
   };
 
   ko.applyBindings(viewModel);

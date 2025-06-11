@@ -171,6 +171,23 @@ public class XmlTest
         Assert.Null(plant2.StandardVolumeMl);
         Assert.Null(plant2.OffsetMl);
     }
+
+    [Fact]
+    public void RootTest()
+    {
+        SModel model = SModel.Empty();
+        model.LastCountsPerLiter = 333;
+        model.UtcWaterConsumptionStart = new DateTime(2025, 6, 11, 9, 0, 0, DateTimeKind.Utc);
+
+        // Act
+        string str = ModelXml.RootToStr(model);
+        SModel model2 = ModelXml.ParseRoot(str);
+
+        Assert.NotNull(model2);
+        Assert.False(ReferenceEquals(model, model2));
+        Assert.Equal(333, model2.LastCountsPerLiter);
+        Assert.Equal(new DateTime(2025, 6, 11, 9, 0, 0, DateTimeKind.Utc), model2.UtcWaterConsumptionStart);
+    }
 }
 
 #pragma warning restore xUnit2013

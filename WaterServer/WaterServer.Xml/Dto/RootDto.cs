@@ -18,4 +18,5 @@ public class RootDto
     public List<ClientActivityDto> ClientActivities { get; set; }
     public ClientActivityDto LastClientActivity { get; set; }
     public string LastCountsPerLiter { get; set; } // Nullable<int> ugly when serialized as null
+    public string UtcWaterConsumptionStart { get; set; } // Nullable<DateTime> ugly when serialized as null
 }

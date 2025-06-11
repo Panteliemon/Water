@@ -40,6 +40,7 @@ public class WebController : Controller
     private async Task<IndexVm> LoadIndex()
     {
         SModel model = await repository.ReadAll();
+        int? waterConsumptionMl = model.GetWaterConsumptionMl();
         IndexVm vm = new IndexVm()
         {
             CountsPerLiter = model.LastCountsPerLiter,
@@ -48,7 +49,9 @@ public class WebController : Controller
             {
                 PlantType = p.PlantType,
                 ValveNo = p.ValveNo
-            }).ToList()
+            }).ToList(),
+            UtcWaterConsumptionStart = model.UtcWaterConsumptionStart,
+            WaterConsumptionLiters = waterConsumptionMl.HasValue ? ((double)waterConsumptionMl.Value)/1000.0 : null
         };
 
         if (HttpContext.Request.Query.ContainsKey("all"))

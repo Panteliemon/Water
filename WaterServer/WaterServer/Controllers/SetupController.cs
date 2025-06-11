@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using WaterServer.ModelSimple;
@@ -176,6 +178,34 @@ public class SetupController : ControllerBase
             }
 
             model.Tasks.RemoveAt(taskIndex);
+            await repository.WriteAll(model);
+            return Ok();
+        });
+    }
+
+    [HttpPost("/setup/wcs")]
+    public async Task<ActionResult> SetWaterConsumptionStart()
+    {
+        DateTime? value = null;
+        string valueStr = await Request.ReadBodyAsString();
+        if (!string.IsNullOrEmpty(valueStr))
+        {
+            if (DateTime.TryParse(valueStr, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime parsed))
+            {
+                value = parsed;
+            }
+            else
+            {
+                return BadRequest("Incorrect DateTime");
+            }
+        }
+
+        return await criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            model.UtcWaterConsumptionStart = value;
             await repository.WriteAll(model);
             return Ok();
         });

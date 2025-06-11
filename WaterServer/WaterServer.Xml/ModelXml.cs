@@ -117,7 +117,8 @@ public static class ModelXml
             Tasks = model.Tasks?.Select(x => TaskToDto(x)).ToList(),
             ClientActivities = model.ClientActivities?.Select(x => CAToDto(x)).ToList(),
             LastClientActivity = (model.LastClientActivity == null) ? null : CAToDto(model.LastClientActivity),
-            LastCountsPerLiter = model.LastCountsPerLiter.HasValue ? model.LastCountsPerLiter.Value.ToString() : null
+            LastCountsPerLiter = model.LastCountsPerLiter.HasValue ? model.LastCountsPerLiter.Value.ToString() : null,
+            UtcWaterConsumptionStart = model.UtcWaterConsumptionStart.HasValue ? model.UtcWaterConsumptionStart.Value.ToString("O", CultureInfo.InvariantCulture) : null
         };
 
         return result;
@@ -230,6 +231,8 @@ public static class ModelXml
             result.LastCountsPerLiter = parsedCPR;
         }
 
+        result.UtcWaterConsumptionStart = StringToNullableDateTime(dto.UtcWaterConsumptionStart);
+
         return result;
     }
 
@@ -326,6 +329,17 @@ public static class ModelXml
     {
         if ((!string.IsNullOrEmpty(str))
             && int.TryParse(str, CultureInfo.InvariantCulture, out int parsed))
+        {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    private static DateTime? StringToNullableDateTime(string str)
+    {
+        if ((!string.IsNullOrEmpty(str))
+            && DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime parsed))
         {
             return parsed;
         }
