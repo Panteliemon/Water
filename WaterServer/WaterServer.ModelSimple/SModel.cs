@@ -26,6 +26,10 @@ public class SModel
     /// Last CPR reported by the client
     /// </summary>
     public int? LastCountsPerLiter { get; set; }
+    /// <summary>
+    /// Instance in time starting from which water consumption is calculated
+    /// </summary>
+    public DateTime? UtcWaterConsumptionStart { get; set; }
 
     public static SModel Empty()
     {
