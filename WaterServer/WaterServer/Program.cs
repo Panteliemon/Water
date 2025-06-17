@@ -4,11 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WaterServer.DataAccess;
+using WaterServer.ModelSimple;
 using WaterServer.Services;
 using WaterServer.Utils;
 
@@ -16,7 +18,7 @@ namespace WaterServer;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         string secretsFolderPath = builder.Configuration[
@@ -68,6 +70,8 @@ public class Program
         WebApplication app = builder.Build();
         // To load parameters and display possible warnings immediately
         app.Services.GetRequiredService<IWaterConfig>();
+        // Create xml line for user / change password - one-time action
+        //await CreateUser(app.Services, "User", "111");
 
         app.UseHsts();
         app.UseHttpsRedirection();
@@ -89,5 +93,11 @@ public class Program
         });
         services.AddSingleton<IWaterConfig, WaterConfig>();
         services.AddSingleton<ICriticalSection, CriticalSection>();
+    }
+
+    private static async Task CreateUser(IServiceProvider services, string name, string password)
+    {
+        IRepository repository = services.GetRequiredService<IRepository>();
+        await repository.CreateUser(name, password);
     }
 }
