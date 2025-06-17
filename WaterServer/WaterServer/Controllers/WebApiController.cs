@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -60,6 +61,7 @@ public class WebApiController : ControllerBase
     }
 
     [HttpPost("/api/task")]
+    [Authorize(Roles = "webeditor")]
     public async Task<ActionResult> SaveTask(TaskDto dto)
     {
         return Ok();

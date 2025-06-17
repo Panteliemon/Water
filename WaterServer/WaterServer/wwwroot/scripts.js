@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         method: "POST"
       });
 
-      location.reload();
+      location.href = START_HREF;
     });
   }
 
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (result.ok) {
-      location.reload();
+      location.href = START_HREF;
     } else {
       alert(LOGIN_FAIL);
       document.querySelector(".sign-in").style.display = "block";

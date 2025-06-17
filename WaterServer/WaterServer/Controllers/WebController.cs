@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -133,20 +134,24 @@ public class WebController : Controller
     [Route("edit/lv")]
     [Route("edit/{id:int}")]
     [Route("edit/lv/{id:int}")]
+    [Authorize(Roles = "webeditor")]
     public async Task<IActionResult> EditTask(int? id)
     {
         ViewData["Title"] = "Rediģēt - Bn Waterer";
         ViewData["Lang"] = "LV";
+        SetLinks("/edit");
         EditTaskVm vm = await CreateEditTaskVm(id);
         return View("EditTask", vm);
     }
 
     [Route("edit/en")]
     [Route("edit/en/{id:int}")]
+    [Authorize(Roles = "webeditor")]
     public async Task<IActionResult> EditTaskEn(int? id)
     {
         ViewData["Title"] = "Edit - Bn Waterer";
         ViewData["Lang"] = "EN";
+        SetLinks("/edit");
         EditTaskVm vm = await CreateEditTaskVm(id);
         return View("EditTask", vm);
     }
@@ -215,6 +220,24 @@ public class WebController : Controller
         }
 
         return result;
+    }
+
+    [Route("/forbidden")]
+    public IActionResult Forbidden()
+    {
+        ViewData["Title"] = "Aizliegts";
+        ViewData["Lang"] = "LV";
+        SetLinks("/forbidden");
+        return View("Forbidden");
+    }
+
+    [Route("/forbidden/en")]
+    public IActionResult ForbiddenEn()
+    {
+        ViewData["Title"] = "Forbidden";
+        ViewData["Lang"] = "EN";
+        SetLinks("/forbidden");
+        return View("Forbidden");
     }
 
     private void SetLinks(string baseUrl)

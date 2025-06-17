@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -100,7 +101,18 @@ public class Program
         {
             options.ExpireTimeSpan = TimeSpan.FromHours(4);
             options.SlidingExpiration = true;
+            options.Events.OnRedirectToAccessDenied = AuthRedirectOverride;
+            options.Events.OnRedirectToLogin = AuthRedirectOverride;
         });
+    }
+
+    private static Task AuthRedirectOverride(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        if (context.Request.Path.Value?.Contains("/en") == true)
+            context.Response.Redirect("/forbidden/en");
+        else
+            context.Response.Redirect("/forbidden");
+        return Task.CompletedTask;
     }
 
     private static async Task CreateUser(IServiceProvider services, string name, string password)
