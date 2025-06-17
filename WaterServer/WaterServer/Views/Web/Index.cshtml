@@ -5,10 +5,18 @@
 @if ((string)ViewData["Lang"] == "EN")
 {
   <h1>Tasks List</h1>
+  @if (Context.Items["webuser"] != null)
+  {
+    <a href="/edit/en">Create New</a>
+  }
 }
 else
 {
   <h1>Uzdevumu saraksts</h1>
+  @if (Context.Items["webuser"] != null)
+  {
+    <a href="/edit">Izveidot jaunu</a>
+  }
 }
 
 <input id="hShowAllTasks" hidden value="@(Model.ShowAllTasks ? 1 : 0)" />
@@ -106,6 +114,10 @@ else
             }
           </th>
         }
+        @if(Context.Items["webuser"] != null)
+        {
+          <th></th>
+        }
       </tr>
     </thead>
     <tbody>
@@ -150,6 +162,19 @@ else
           </p>
         </td>
         <!-- /ko -->
+        @if (Context.Items["webuser"] != null)
+        {
+          <td>
+            @if ((string)ViewData["Lang"] == "EN")
+            {
+              <a data-bind="attr: {href: '/edit/en/' + taskId}">Edit</a>
+            }
+            else
+            {
+              <a data-bind="attr: {href: '/edit/' + taskId}">Rediģēt</a>
+            }
+          </td>
+        }
       </tr>
       <!-- /ko -->
     </tbody>

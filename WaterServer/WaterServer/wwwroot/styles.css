@@ -133,6 +133,7 @@ header .motto p:not(:first-child) {
   top: 1vw;
   right: 1vw;
   background: var(--tab-bg);
+  padding: var(--step);
 }
 .sign-in label {
   display: block;
