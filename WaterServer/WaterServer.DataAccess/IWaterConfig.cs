@@ -11,4 +11,5 @@ public interface IWaterConfig
     string StorageRoot { get; }
     string ApiKeyConsole { get; }
     string ApiKeyArduino { get; }
+    string PasswordSalt { get; }
 }

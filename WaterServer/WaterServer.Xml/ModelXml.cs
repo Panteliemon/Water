@@ -18,6 +18,7 @@ public static class ModelXml
     private static XmlSerializer rootSerializer;
     private static XmlSerializer taskSerializer;
     private static XmlSerializer plantSerializer;
+    private static XmlSerializer userSerializer;
     private static XmlSerializerNamespaces xmlNamespaces;
     private static XmlWriterSettings xmlWriterSettings;
 
@@ -101,6 +102,33 @@ public static class ModelXml
         {
             PlantDto dto = (PlantDto)plantSerializer.Deserialize(reader);
             return DtoToPlant(dto);
+        }
+    }
+
+    public static string RootUserToStr(RootUserDto dto)
+    {
+        if (dto == null)
+            return null;
+
+        InitUserSerializer();
+
+        StringBuilder sb = new();
+        using (XmlWriter writer = XmlWriter.Create(sb, xmlWriterSettings))
+        {
+            userSerializer.Serialize(writer, dto, xmlNamespaces);
+        }
+
+        return sb.ToString();
+    }
+
+    public static RootUserDto ParseRootUser(string str)
+    {
+        InitUserSerializer();
+
+        using (TextReader reader = new StringReader(str))
+        {
+            RootUserDto dto = (RootUserDto)userSerializer.Deserialize(reader);
+            return dto;
         }
     }
 
@@ -375,6 +403,16 @@ public static class ModelXml
         {
             if (plantSerializer == null)
                 plantSerializer = new XmlSerializer(typeof(PlantDto));
+            InitXmlSettings();
+        }
+    }
+
+    private static void InitUserSerializer()
+    {
+        lock (lockObj)
+        {
+            if (userSerializer == null)
+                userSerializer = new XmlSerializer(typeof(RootUserDto));
             InitXmlSettings();
         }
     }

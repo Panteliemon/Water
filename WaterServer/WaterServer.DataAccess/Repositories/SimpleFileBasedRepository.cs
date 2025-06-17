@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WaterServer.ModelSimple;
 using WaterServer.Xml;
+using WaterServer.Xml.Dto;
 
 namespace WaterServer.DataAccess.Repositories;
 
@@ -16,14 +17,22 @@ internal class SimpleFileBasedRepository : IRepository
     private object lockObj = new();
 
     private string storageFilePath;
+    private string usersFilePath;
+    private string passwordSalt;
+
     private Task criticalSectionTask;
 
     private SModel cachedModel;
     private DateTime? cacheValidUntil;
 
+    private RootUserDto cachedUsers;
+    private DateTime? usersCacheValidUntil;
+
     public SimpleFileBasedRepository(IWaterConfig waterConfig)
     {
         storageFilePath = Path.Combine(waterConfig.StorageRoot, "wsdata.xml");
+        usersFilePath = Path.Combine(waterConfig.StorageRoot, "wsusers.xml");
+        passwordSalt = waterConfig.PasswordSalt;
     }
 
     public async Task<SModel> ReadAll()
@@ -67,6 +76,92 @@ internal class SimpleFileBasedRepository : IRepository
             string modelXml = ModelXml.RootToStr(model);
             File.WriteAllText(storageFilePath, modelXml, Encoding.UTF8);
         }));
+    }
+
+    public async Task CreateUser(string name, string password)
+    {
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException();
+
+        await ExecuteUnderCriticalSection(async () =>
+        {
+            RootUserDto rootDto = await ReadUsers();
+            rootDto ??= RootUserDto.Empty();
+            rootDto.Users ??= new List<UserDto>();
+
+            string nameLower = name.ToLower();
+            string passwordHash = SecurityUtils.GetPasswordHash(password, passwordSalt);
+            UserDto existing = rootDto.Users?.FirstOrDefault(user => user.Name?.ToLower() == nameLower);
+            if (existing != null)
+            {
+                existing.PasswordHash = passwordHash;
+            }
+            else
+            {
+                rootDto.Users.Add(new UserDto()
+                {
+                    Name = name,
+                    PasswordHash = passwordHash
+                });
+            }
+
+            await WriteUsers(rootDto);
+        });
+    }
+
+    public async Task<bool> VerifyUser(string name, string password)
+    {
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        bool result = false;
+        await ExecuteUnderCriticalSection(async () =>
+        {
+            RootUserDto rootDto = await ReadUsers();
+            if (rootDto?.Users != null)
+            {
+                string nameLower = name.ToLower();
+                UserDto existing = rootDto.Users?.FirstOrDefault(user => user.Name?.ToLower() == nameLower);
+                if (existing != null)
+                {
+                    string passwordHash = SecurityUtils.GetPasswordHash(password, passwordSalt);
+                    result = existing.PasswordHash == passwordHash;
+                }
+            }
+        });
+
+        return result;
+    }
+
+    private async Task<RootUserDto> ReadUsers()
+    {
+        if (usersCacheValidUntil.HasValue)
+        {
+            DateTime now = DateTime.Now;
+            if (now < usersCacheValidUntil.Value)
+            {
+                return cachedUsers;
+            }
+        }
+
+        // Fallback: honest read
+        if (!File.Exists(usersFilePath))
+            return null;
+
+        string usersXml = await File.ReadAllTextAsync(usersFilePath, Encoding.UTF8);
+        cachedUsers = ModelXml.ParseRootUser(usersXml);
+        usersCacheValidUntil = DateTime.Now.Add(cacheLifeTime);
+
+        return cachedUsers;
+    }
+
+    private async Task WriteUsers(RootUserDto dto)
+    {
+        usersCacheValidUntil = DateTime.Now.Add(cacheLifeTime);
+        cachedUsers = dto;
+
+        string usersXml = ModelXml.RootUserToStr(dto);
+        await File.WriteAllTextAsync(usersFilePath, usersXml, Encoding.UTF8);
     }
 
     private async Task ExecuteUnderCriticalSection(Func<Task> funcToExecute)
