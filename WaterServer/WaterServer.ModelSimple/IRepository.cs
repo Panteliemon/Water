@@ -10,4 +10,7 @@ public interface IRepository
 {
     Task<SModel> ReadAll();
     Task WriteAll(SModel model);
+
+    Task CreateUser(string name, string password);
+    Task<UserVerificationResult> VerifyUser(string name, string password);
 }

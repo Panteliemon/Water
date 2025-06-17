@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WaterServer.Dtos;
 using WaterServer.ModelSimple;
 using WaterServer.ViewModels;
 
@@ -125,6 +128,116 @@ public class WebController : Controller
         ViewData["Lang"] = "EN";
         SetLinks("/about");
         return View("About");
+    }
+
+    [Route("edit")]
+    [Route("edit/lv")]
+    [Route("edit/{id:int}")]
+    [Route("edit/lv/{id:int}")]
+    [Authorize(Roles = "webeditor")]
+    public async Task<IActionResult> EditTask(int? id)
+    {
+        ViewData["Title"] = "Rediģēt - Bn Waterer";
+        ViewData["Lang"] = "LV";
+        SetLinks("/edit");
+        EditTaskVm vm = await CreateEditTaskVm(id);
+        return View("EditTask", vm);
+    }
+
+    [Route("edit/en")]
+    [Route("edit/en/{id:int}")]
+    [Authorize(Roles = "webeditor")]
+    public async Task<IActionResult> EditTaskEn(int? id)
+    {
+        ViewData["Title"] = "Edit - Bn Waterer";
+        ViewData["Lang"] = "EN";
+        SetLinks("/edit");
+        EditTaskVm vm = await CreateEditTaskVm(id);
+        return View("EditTask", vm);
+    }
+
+    public async Task<EditTaskVm> CreateEditTaskVm(int? id)
+    {
+        EditTaskVm result = new()
+        {
+            CurrentState = new TaskDto()
+            {
+                Id = id ?? 0,
+                Items = new List<TaskItemDto>()
+            },
+            Plants = new List<PlantEditTaskVm>()
+        };
+
+        SModel model = await repository.ReadAll();
+        STask existingTask = id.HasValue ? model.Tasks.FirstOrDefault(t => t.Id == id.Value) : null;
+        if (existingTask != null)
+        {
+            result.CurrentState.UtcValidFrom = existingTask.UtcValidFrom;
+            result.CurrentState.UtcValidTo = existingTask.UtcValidTo;
+        }
+        else
+        {
+            result.CurrentState.Id = 0;
+        }
+        
+        foreach (SPlant plant in model.Plants)
+        {
+            result.Plants.Add(new PlantEditTaskVm()
+            {
+                Index = plant.Index,
+                StandardVolumeMl = plant.StandardVolumeMl,
+                OffsetMl = plant.OffsetMl
+            });
+
+            if (existingTask == null)
+            {
+                result.CurrentState.Items.Add(new TaskItemDto()
+                {
+                    PlantIndex = plant.Index,
+                    VolumeMl = 0
+                });
+            }
+            else
+            {
+                STaskItem existingItem = existingTask.Items.FirstOrDefault(item => item.Plant.Index == plant.Index);
+                if (existingItem != null)
+                {
+                    result.CurrentState.Items.Add(new TaskItemDto()
+                    {
+                        PlantIndex = plant.Index,
+                        VolumeMl = existingItem.VolumeMl
+                    });
+                }
+                else
+                {
+                    result.CurrentState.Items.Add(new TaskItemDto()
+                    {
+                        PlantIndex = plant.Index,
+                        VolumeMl = 0
+                    });
+                }
+            }
+        }
+
+        return result;
+    }
+
+    [Route("/forbidden")]
+    public IActionResult Forbidden()
+    {
+        ViewData["Title"] = "Aizliegts";
+        ViewData["Lang"] = "LV";
+        SetLinks("/forbidden");
+        return View("Forbidden");
+    }
+
+    [Route("/forbidden/en")]
+    public IActionResult ForbiddenEn()
+    {
+        ViewData["Title"] = "Forbidden";
+        ViewData["Lang"] = "EN";
+        SetLinks("/forbidden");
+        return View("Forbidden");
     }
 
     private void SetLinks(string baseUrl)

@@ -35,3 +35,58 @@ function updateQueryParam(paramName, value) {
     syncLanguageLinks();
   }
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+  let signInButton = document.querySelector(".sign-in-button .btn-enter");
+  if (signInButton) {
+    signInButton.addEventListener("click", () => {
+      signInButton.style.display = "none";
+      document.querySelector(".sign-in").style.display = "block";
+    });
+  }
+
+  let signOutButton = document.querySelector(".sign-in-button .btn-exit");
+  if (signOutButton) {
+    signOutButton.addEventListener("click", async () => {
+      signOutButton.style.display = "none";
+      await fetch("/api/signout", {
+        method: "POST"
+      });
+
+      location.href = START_HREF;
+    });
+  }
+
+  let enterButton = document.querySelector(".sign-in .btn-enter");
+  enterButton.addEventListener("click", async () => {
+    let signInDto = {
+      userName: document.getElementById("signInUser").value,
+      userPassword: document.getElementById("signInPassword").value
+    };
+
+    document.querySelector(".sign-in").style.display = "none";
+    document.getElementById("signInPassword").value = "";
+
+    let result = await fetch("/api/signin", {
+      method: "POST",
+      body: JSON.stringify(signInDto),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    });
+
+    if (result.ok) {
+      location.href = START_HREF;
+    } else {
+      alert(LOGIN_FAIL);
+      document.querySelector(".sign-in").style.display = "block";
+      document.getElementById("signInPassword").value = signInDto.userPassword;
+    }
+  });
+
+  let cancelButton = document.querySelector(".sign-in .btn-cancel");
+  cancelButton.addEventListener("click", () => {
+    signInButton.style.display = "inline-block";
+    document.querySelector(".sign-in").style.display = "none";
+  });
+});

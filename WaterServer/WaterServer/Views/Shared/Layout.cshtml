@@ -7,6 +7,20 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-latest.js" integrity="sha512-2AL/VEauKkZqQU9BHgnv48OhXcJPx9vdzxN1JrKDVc4FPU/MEE/BZ6d9l0mP7VmvLsjtYwqiYQpDskK9dG8KBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="/scripts.js"></script>
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <script>
+      const LOGIN_FAIL = "Incorrect user/password";
+      const START_HREF = "/en";
+    </script>
+  }
+  else
+  {
+    <script>
+      const LOGIN_FAIL = "Nepareizs lietotājs/parole";
+      const START_HREF = "/";
+    </script>
+  }
   @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -24,6 +38,77 @@
         <p>Laisti savus augus bez piecelšanās no krēsla!</p>
         <p>VAI: atvaļinājumā</p>
       }
+    </div>
+    <div class="sign-in-button">
+      @if (Context.Items["webuser"] == null)
+      {
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <button class="btn-enter">Enter</button>
+        }
+        else
+        {
+          <button class="btn-enter">Ieiet</button>
+        }
+      }
+      else
+      {
+        <span>@Context.Items["webuser"]</span>
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <button class="btn-exit">Exit</button>
+        }
+        else
+        {
+          <button class="btn-exit">Iziet</button>
+        }
+      }
+    </div>
+    <div class="sign-in">
+      <label for="signInUser">
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>User</text>
+        }
+        else
+        {
+          <text>Lietotājs</text>
+        }
+      </label>
+      <input type="text" id="signInUser" />
+      <label for="signInPassword">
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>Password</text>
+        }
+        else
+        {
+          <text>Parole</text>
+        }
+      </label>
+      <input type="password" id="signInPassword" />
+      <div class="buttons">
+        <button class="btn-enter">
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <text>Enter</text>
+          }
+          else
+          {
+            <text>Ieiet</text>
+          }
+        </button>
+        <button class="btn-cancel">
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <text>Cancel</text>
+          }
+          else
+          {
+            <text>Atcelt</text>
+          }
+        </button>
+      </div>
     </div>
   </header>
   <nav>

@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using WaterServer.DataAccess.Repositories;
 using WaterServer.ModelSimple;
 using WaterServer.Xml;
+using WaterServer.Xml.Dto;
 
 namespace Tests.Model;
 
@@ -187,6 +189,39 @@ public class XmlTest
         Assert.False(ReferenceEquals(model, model2));
         Assert.Equal(333, model2.LastCountsPerLiter);
         Assert.Equal(new DateTime(2025, 6, 11, 9, 0, 0, DateTimeKind.Utc), model2.UtcWaterConsumptionStart);
+    }
+
+    [Fact]
+    public void UserTest()
+    {
+        RootUserDto dto1 = new()
+        {
+            Users = [
+                new UserDto()
+                {
+                    Name = "User 1",
+                    PasswordHash = "HHH"
+                },
+                new UserDto()
+                {
+                    Name = "User 2",
+                    PasswordHash = "222"
+                }
+            ]
+        };
+
+        // Act
+        string str = ModelXml.RootUserToStr(dto1);
+        RootUserDto dto2 = ModelXml.ParseRootUser(str);
+
+        Assert.NotNull(dto2);
+        Assert.False(ReferenceEquals(dto1, dto2));
+        Assert.NotNull(dto2.Users);
+        Assert.Equal(2, dto2.Users.Count);
+        Assert.Equal("User 1", dto2.Users[0].Name);
+        Assert.Equal("HHH", dto2.Users[0].PasswordHash);
+        Assert.Equal("User 2", dto2.Users[1].Name);
+        Assert.Equal("222", dto2.Users[1].PasswordHash);
     }
 }
 

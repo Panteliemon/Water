@@ -52,9 +52,20 @@ internal class WaterConfig : IWaterConfig
         {
             logger.LogWarning("Api key for Arduino not found.");
         }
+
+        try
+        {
+            string saltFile = Path.Combine(secretsFolder, "salt.txt");
+            PasswordSalt = File.ReadAllText(saltFile).Trim();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("Password salt not found.");
+        }
     }
 
     public string StorageRoot { get; private set; }
     public string ApiKeyConsole { get; private set; }
     public string ApiKeyArduino { get; private set; }
+    public string PasswordSalt { get; private set; }
 }
