@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using WaterServer.Dtos;
@@ -15,10 +17,12 @@ namespace WaterServer.Controllers;
 public class WebApiController : ControllerBase
 {
     private IRepository repository;
+    private ICriticalSection criticalSection;
 
-    public WebApiController(IRepository repository)
+    public WebApiController(IRepository repository, ICriticalSection criticalSection)
     {
         this.repository = repository;
+        this.criticalSection = criticalSection;
     }
 
     [HttpPost("/api/signin")]
@@ -62,8 +66,84 @@ public class WebApiController : ControllerBase
 
     [HttpPost("/api/task")]
     [Authorize(Roles = "webeditor")]
-    public async Task<ActionResult> SaveTask(TaskDto dto)
+    public async Task<ActionResult> SaveTask([Required] TaskDto dto)
     {
-        return Ok();
+        if (!ModelState.IsValid)
+            return BadRequest();
+
+        if (dto.UtcValidFrom > dto.UtcValidTo)
+        {
+            return BadRequest($"Invalid task's date range.");
+        }
+
+        return await criticalSection.Execute<ActionResult>(async () =>
+        {
+            SModel model = await repository.ReadAll();
+            model ??= SModel.Empty();
+
+            // Find/Create task
+            STask task = model.Tasks.FirstOrDefault(t => t.Id == dto.Id);
+            if (task == null)
+            {
+                task = STask.Empty();
+
+                // Assign ID
+                if (model.Tasks.Count > 0)
+                {
+                    task.Id = model.Tasks.Max(t => t.Id) + 1;
+                }
+                else
+                {
+                    task.Id = 1;
+                }
+
+                model.Tasks.Add(task);
+            }
+
+            task.UtcValidFrom = dto.UtcValidFrom.Value;
+            task.UtcValidTo = dto.UtcValidTo.Value;
+
+            foreach (TaskItemDto itemDto in dto.Items)
+            {
+                STaskItem taskItem = task.Items.FirstOrDefault(x => x.Plant?.Index == itemDto.PlantIndex);
+
+                if (itemDto.VolumeMl > 0)
+                {
+                    // Create if doesn't exist
+                    if (taskItem == null)
+                    {
+                        SPlant plant = model.Plants.FirstOrDefault(p => p.Index == itemDto.PlantIndex);
+                        if (plant == null)
+                            return BadRequest("Plant not found by index");
+
+                        taskItem = new STaskItem()
+                        {
+                            Plant = plant
+                        };
+                        task.Items.Add(taskItem);
+                    }
+
+                    // Modify if wasn't executed
+                    if (taskItem.Status == STaskStatus.NotStarted)
+                    {
+                        if (itemDto.VolumeMl > STaskItem.MAX_VOLUMEML)
+                            taskItem.VolumeMl = STaskItem.MAX_VOLUMEML;
+                        else
+                            taskItem.VolumeMl = itemDto.VolumeMl;
+                    }
+                }
+                else
+                {
+                    // Erase existing item if wasn't executed
+                    if ((taskItem != null) && (taskItem.Status == STaskStatus.NotStarted))
+                    {
+                        task.Items.Remove(taskItem);
+                    }
+                }
+            }
+
+            await repository.WriteAll(model);
+            return Ok();
+        });
     }
 }
