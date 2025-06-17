@@ -128,7 +128,6 @@ header .motto p:not(:first-child) {
 }
 
 .sign-in {
-  display: none;
   position: absolute;
   top: 1vw;
   right: 1vw;

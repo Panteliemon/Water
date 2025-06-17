@@ -146,14 +146,12 @@ else
   function setDateTimeUtc(input, utcValue) {
     let localValue = new Date(utcValue.getTime());
     localValue.setMinutes(localValue.getMinutes() - localValue.getTimezoneOffset());
-    input.valueAsDate = localValue;
+    input.value = localValue.toISOString().slice(0, 16);
   }
 
   function getDateTime(input) {
-    if (input.valueAsDate instanceof Date) {
-      let result = new Date(input.valueAsDate.getTime());
-      result.setMinutes(result.getMinutes() + result.getTimezoneOffset());
-      return result;
+    if (input.value) {
+      return new Date(input.value);
     } else {
       return null;
     }
