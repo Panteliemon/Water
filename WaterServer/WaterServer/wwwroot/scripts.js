@@ -37,11 +37,25 @@ function updateQueryParam(paramName, value) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  let signInButton = document.querySelector(".sign-in-button button");
-  signInButton.addEventListener("click", () => {
-    signInButton.style.display = "none";
-    document.querySelector(".sign-in").style.display = "block";
-  });
+  let signInButton = document.querySelector(".sign-in-button .btn-enter");
+  if (signInButton) {
+    signInButton.addEventListener("click", () => {
+      signInButton.style.display = "none";
+      document.querySelector(".sign-in").style.display = "block";
+    });
+  }
+
+  let signOutButton = document.querySelector(".sign-in-button .btn-exit");
+  if (signOutButton) {
+    signOutButton.addEventListener("click", async () => {
+      signOutButton.style.display = "none";
+      await fetch("/api/signout", {
+        method: "POST"
+      });
+
+      location.reload();
+    });
+  }
 
   let enterButton = document.querySelector(".sign-in .btn-enter");
   enterButton.addEventListener("click", async () => {
@@ -50,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       userPassword: document.getElementById("signInPassword").value
     };
 
+    document.querySelector(".sign-in").style.display = "none";
     document.getElementById("signInPassword").value = "";
 
     let result = await fetch("/api/signin", {
@@ -61,13 +76,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (result.ok) {
-      alert("Welcome!");
+      location.reload();
     } else {
-      alert("Incorrect user/password");
+      alert(LOGIN_FAIL);
+      document.querySelector(".sign-in").style.display = "block";
+      document.getElementById("signInPassword").value = signInDto.userPassword;
     }
-
-    signInButton.style.display = "inline-block";
-    document.querySelector(".sign-in").style.display = "none";
   });
 
   let cancelButton = document.querySelector(".sign-in .btn-cancel");

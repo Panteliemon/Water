@@ -100,10 +100,12 @@ header .motto p:not(:first-child) {
   }
 }
 
-.sign-in-button button {
+.sign-in-button {
   position: absolute;
   top: 1vw;
   right: 1vw;
+}
+.sign-in-button button {
   background: var(--tab-bg);
 }
 .sign-in-button button:hover {

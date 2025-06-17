@@ -109,12 +109,13 @@ internal class SimpleFileBasedRepository : IRepository
         });
     }
 
-    public async Task<bool> VerifyUser(string name, string password)
+    public async Task<UserVerificationResult> VerifyUser(string name, string password)
     {
         if (string.IsNullOrEmpty(name))
-            return false;
+            return new UserVerificationResult(false, null);
 
-        bool result = false;
+        bool success = false;
+        string realUserName = null;
         await ExecuteUnderCriticalSection(async () =>
         {
             RootUserDto rootDto = await ReadUsers();
@@ -125,12 +126,16 @@ internal class SimpleFileBasedRepository : IRepository
                 if (existing != null)
                 {
                     string passwordHash = SecurityUtils.GetPasswordHash(password, passwordSalt);
-                    result = existing.PasswordHash == passwordHash;
+                    success = existing.PasswordHash == passwordHash;
+                    if (success)
+                    {
+                        realUserName = existing.Name;
+                    }
                 }
             }
         });
 
-        return result;
+        return new UserVerificationResult(success, realUserName);
     }
 
     private async Task<RootUserDto> ReadUsers()

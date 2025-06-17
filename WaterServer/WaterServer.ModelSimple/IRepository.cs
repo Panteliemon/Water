@@ -12,5 +12,5 @@ public interface IRepository
     Task WriteAll(SModel model);
 
     Task CreateUser(string name, string password);
-    Task<bool> VerifyUser(string name, string password);
+    Task<UserVerificationResult> VerifyUser(string name, string password);
 }

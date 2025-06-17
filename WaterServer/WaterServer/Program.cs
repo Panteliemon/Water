@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +55,6 @@ public class Program
 
             builder.WebHost.ConfigureKestrel(options =>
             {
-                
                 options.Limits.MaxRequestBodySize = 1 << 20;
                 options.Listen(IPAddress.Any, 80);
                 options.Listen(IPAddress.Any, 443, listenOptions =>
@@ -76,7 +76,10 @@ public class Program
         app.UseHsts();
         app.UseHttpsRedirection();
         app.UseStaticFiles();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.AddCustomAuthenticator();
+        app.AddCookieAuthenticatedUser();
         app.MapControllers();
         app.AddSimpleAuthorizator();
         app.IntegrateMegaDechunker();
@@ -93,6 +96,11 @@ public class Program
         });
         services.AddSingleton<IWaterConfig, WaterConfig>();
         services.AddSingleton<ICriticalSection, CriticalSection>();
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+        {
+            options.ExpireTimeSpan = TimeSpan.FromHours(4);
+            options.SlidingExpiration = true;
+        });
     }
 
     private static async Task CreateUser(IServiceProvider services, string name, string password)

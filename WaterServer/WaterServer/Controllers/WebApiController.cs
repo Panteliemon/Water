@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using WaterServer.Dtos;
 using WaterServer.ModelSimple;
@@ -18,13 +23,39 @@ public class WebApiController : ControllerBase
     [HttpPost("/api/signin")]
     public async Task<ActionResult> SignIn(SignInDto signInDto)
     {
-        if (await repository.VerifyUser(signInDto?.UserName, signInDto?.UserPassword))
+        UserVerificationResult result = await repository.VerifyUser(signInDto?.UserName, signInDto?.UserPassword);
+        if (result.Success)
         {
+            List<Claim> claims = new()
+            {
+                new Claim(ClaimTypes.Name, result.UserName),
+                new Claim(ClaimTypes.Role, "webeditor")
+            };
+            ClaimsIdentity claimsIdentity = new(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            AuthenticationProperties authProperties = new()
+            {
+                AllowRefresh = true,
+                IssuedUtc = DateTime.UtcNow
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties
+            );
+
             return Ok();
         }
         else
         {
             return BadRequest();
         }
+    }
+
+    [HttpPost("/api/signout")]
+    public async Task<ActionResult> CookieSignOut()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok();
     }
 }

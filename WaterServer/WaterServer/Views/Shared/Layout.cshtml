@@ -7,6 +7,18 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-latest.js" integrity="sha512-2AL/VEauKkZqQU9BHgnv48OhXcJPx9vdzxN1JrKDVc4FPU/MEE/BZ6d9l0mP7VmvLsjtYwqiYQpDskK9dG8KBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="/scripts.js"></script>
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <script>
+      const LOGIN_FAIL = "Incorrect user/password";
+    </script>
+  }
+  else
+  {
+    <script>
+      const LOGIN_FAIL = "Nepareizs lietotājs/parole";
+    </script>
+  }
   @RenderSection("Styles", required: false)
 </head>
 <body>
@@ -26,26 +38,27 @@
       }
     </div>
     <div class="sign-in-button">
-      @if (ViewData["User"] == null)
+      @if (Context.Items["webuser"] == null)
       {
         @if ((string)ViewData["Lang"] == "EN")
         {
-          <button>Enter</button>
+          <button class="btn-enter">Enter</button>
         }
         else
         {
-          <button>Ieiet</button>
+          <button class="btn-enter">Ieiet</button>
         }
       }
       else
       {
+        <span>@Context.Items["webuser"]</span>
         @if ((string)ViewData["Lang"] == "EN")
         {
-
+          <button class="btn-exit">Exit</button>
         }
         else
         {
-
+          <button class="btn-exit">Iziet</button>
         }
       }
     </div>
