@@ -25,6 +25,76 @@
         <p>VAI: atvaļinājumā</p>
       }
     </div>
+    <div class="sign-in-button">
+      @if (ViewData["User"] == null)
+      {
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <button>Enter</button>
+        }
+        else
+        {
+          <button>Ieiet</button>
+        }
+      }
+      else
+      {
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+
+        }
+        else
+        {
+
+        }
+      }
+    </div>
+    <div class="sign-in">
+      <label for="signInUser">
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>User</text>
+        }
+        else
+        {
+          <text>Lietotājs</text>
+        }
+      </label>
+      <input type="text" id="signInUser" />
+      <label for="signInPassword">
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>Password</text>
+        }
+        else
+        {
+          <text>Parole</text>
+        }
+      </label>
+      <input type="password" id="signInPassword" />
+      <div class="buttons">
+        <button class="btn-enter">
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <text>Enter</text>
+          }
+          else
+          {
+            <text>Ieiet</text>
+          }
+        </button>
+        <button class="btn-cancel">
+          @if ((string)ViewData["Lang"] == "EN")
+          {
+            <text>Cancel</text>
+          }
+          else
+          {
+            <text>Atcelt</text>
+          }
+        </button>
+      </div>
+    </div>
   </header>
   <nav>
     <div class="links">

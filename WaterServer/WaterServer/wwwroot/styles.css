@@ -31,6 +31,23 @@ footer {
   text-align: right;
 }
 
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  font-family: Roboto, Arial, sans-serif;
+  font-size: 16px;
+  text-transform: uppercase;
+  padding: var(--step);
+  color: var(--text);
+}
+
+@media only screen and (max-width: 600px) {
+  button {
+    font-size: 13px;
+  }
+}
+
 header {
   margin: var(--step) var(--step) 0 var(--step);
   position: relative;
@@ -81,6 +98,43 @@ header .motto p:not(:first-child) {
   header .motto p:not(:first-child) {
     font-size: 2.3vw;
   }
+}
+
+.sign-in-button button {
+  position: absolute;
+  top: 1vw;
+  right: 1vw;
+  background: var(--tab-bg);
+}
+.sign-in-button button:hover {
+  background: var(--headers);
+  color: var(--background);
+}
+.sign-in-button button:active {
+  background: var(--text);
+  color: var(--background);
+}
+
+.sign-in {
+  display: none;
+  position: absolute;
+  top: 1vw;
+  right: 1vw;
+  background: var(--tab-bg);
+}
+.sign-in label {
+  display: block;
+}
+.sign-in button {
+  background: var(--background);
+}
+.sign-in button:hover {
+  background: var(--headers);
+  color: var(--background);
+}
+.sign-in button:active {
+  background: var(--text);
+  color: var(--background);
 }
 
 section.main {
@@ -226,21 +280,8 @@ h1 {
 }
 
 div.switcher > button {
-  cursor: pointer;
-  border: none;
-  border-radius: var(--radius);
-  font-family: Roboto, Arial, sans-serif;
-  font-size: 16px;
-  text-transform: uppercase;
-  padding: var(--step);
   margin: 0 var(--step) 0 0;
   background: var(--inactive-tab-bg);
-  color: var(--text);
-}
-@media only screen and (max-width: 600px) {
-  div.switcher > button {
-    font-size: 13px;
-  }
 }
 
 div.switcher > button:hover {

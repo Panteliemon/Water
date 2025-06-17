@@ -35,3 +35,44 @@ function updateQueryParam(paramName, value) {
     syncLanguageLinks();
   }
 }
+
+document.addEventListener("DOMContentLoaded", async () => {
+  let signInButton = document.querySelector(".sign-in-button button");
+  signInButton.addEventListener("click", () => {
+    signInButton.style.display = "none";
+    document.querySelector(".sign-in").style.display = "block";
+  });
+
+  let enterButton = document.querySelector(".sign-in .btn-enter");
+  enterButton.addEventListener("click", async () => {
+    let signInDto = {
+      userName: document.getElementById("signInUser").value,
+      userPassword: document.getElementById("signInPassword").value
+    };
+
+    document.getElementById("signInPassword").value = "";
+
+    let result = await fetch("/api/signin", {
+      method: "POST",
+      body: JSON.stringify(signInDto),
+      headers: {
+        "Content-type": "application/json; charset=UTF-8"
+      }
+    });
+
+    if (result.ok) {
+      alert("Welcome!");
+    } else {
+      alert("Incorrect user/password");
+    }
+
+    signInButton.style.display = "inline-block";
+    document.querySelector(".sign-in").style.display = "none";
+  });
+
+  let cancelButton = document.querySelector(".sign-in .btn-cancel");
+  cancelButton.addEventListener("click", () => {
+    signInButton.style.display = "inline-block";
+    document.querySelector(".sign-in").style.display = "none";
+  });
+});
