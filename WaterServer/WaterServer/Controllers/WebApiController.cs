@@ -58,4 +58,10 @@ public class WebApiController : ControllerBase
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Ok();
     }
+
+    [HttpPost("/api/task")]
+    public async Task<ActionResult> SaveTask(TaskDto dto)
+    {
+        return Ok();
+    }
 }

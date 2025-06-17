@@ -1,0 +1,268 @@
+﻿@model WaterServer.ViewModels.EditTaskVm
+@using WaterServer.Dtos
+@using WaterServer.Utils
+@using WaterServer.ViewModels
+
+@if(Model.IsNew)
+{
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <h1>Add new task</h1>
+  }
+  else
+  {
+    <h1>Izveidot jaunu uzdevumu</h1>
+  }
+}
+else
+{
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <h1>Edit task @Model.CurrentState.Id</h1>
+  }
+  else
+  {
+    <h1>Rediģēt uzdevumu @Model.CurrentState.Id</h1>
+  }
+}
+
+<label for="dtFrom">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Valid From</text>
+  }
+  else
+  {
+    <text>Derīgs no</text>
+  }
+</label>
+</br>
+<input id="dtFrom" type="datetime-local">
+</br>
+<label for="dtTo">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Valid To</text>
+  }
+  else
+  {
+    <text>Derīgs līdz</text>
+  }
+</label>
+</br>
+<input id="dtTo" type="datetime-local">
+</br>
+
+<button onclick="dayButtonClick(0)">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Today</text>
+  }
+  else
+  {
+    <text>Šodien</text>
+  }
+</button>
+<button onclick="dayButtonClick(1)">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>Tomorrow</text>
+  }
+  else
+  {
+    <text>Rīt</text>
+  }
+</button>
+<button onclick="dayButtonClick(2)">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>+2</text>
+  }
+  else
+  {
+    <text>Parīt</text>
+  }
+</button>
+<button onclick="dayButtonClick(3)">
+  +3
+</button>
+<br/>
+
+@foreach (TaskItemDto item in Model.CurrentState.Items)
+{
+  <label for="@("p" + item.PlantIndex.ToString())">
+      @(item.PlantIndex + 1):
+  </label>
+  <br/>
+  <input id="@("p" + item.PlantIndex.ToString())"
+         type="text"
+         value="@(item.VolumeMl)" />
+  <br/>
+}
+
+<button onclick="volumeButtonClick(1)">
+  1
+</button>
+<button onclick="volumeButtonClick(1/3)">
+  1/3
+</button>
+<button onclick="volumeButtonClick(2/3)">
+  2/3
+</button>
+<button onclick="volumeButtonClick(4/3)">
+  4/3
+</button>
+<button onclick="volumeButtonClick(1/2)">
+  1/2
+</button>
+<button onclick="volumeButtonClick(3/2)">
+  3/2
+</button>
+<br />
+
+<br />
+<button onclick="saveButtonClick()">
+  @if ((string)ViewData["Lang"] == "EN")
+  {
+    <text>SAVE</text>
+  }
+  else
+  {
+    <text>SAGLABĀT</text>
+  }
+</button>
+
+<script>
+  let defaults = [
+    @foreach(PlantEditTaskVm plant in Model.Plants)
+    {
+    <text>{
+      index: @plant.Index,
+      defVolume: @(plant.StandardVolumeMl.HasValue ? plant.StandardVolumeMl.Value.ToString() : "null"),
+      offset: @(plant.OffsetMl.HasValue ? plant.OffsetMl.Value.ToString() : "null") }, </text>
+    }
+  ];
+
+  function setDateTimeUtc(input, utcValue) {
+    let localValue = new Date(utcValue.getTime());
+    localValue.setMinutes(localValue.getMinutes() - localValue.getTimezoneOffset());
+    input.valueAsDate = localValue;
+  }
+
+  function getDateTime(input) {
+    if (input.valueAsDate instanceof Date) {
+      let result = new Date(input.valueAsDate.getTime());
+      result.setMinutes(result.getMinutes() + result.getTimezoneOffset());
+      return result;
+    } else {
+      return null;
+    }
+  }
+
+  function dayButtonClick(offsetFromToday) {
+    let todayBegin = new Date();
+    todayBegin.setHours(0, 0, 0, 0);
+    let rangeBegin = new Date(todayBegin.getTime());
+    rangeBegin.setDate(rangeBegin.getDate() + offsetFromToday);
+    let rangeEnd = new Date(rangeBegin.getTime());
+    rangeEnd.setHours(rangeEnd.getHours() + 24);
+
+    setDateTimeUtc(document.getElementById("dtFrom"), rangeBegin);
+    setDateTimeUtc(document.getElementById("dtTo"), rangeEnd);
+  }
+
+  function volumeButtonClick(fraction) {
+    for (let defaultItem of defaults) {
+      let volume = null;
+      if (defaultItem.defVolume !== null) {
+        volume = defaultItem.defVolume * fraction;
+        if (defaultItem.offset != null) {
+          volume += defaultItem.offset;
+        }
+      }
+
+      if (volume != null) {
+        let inputId = `p${defaultItem.index}`;
+        document.getElementById(inputId).value = volume;
+      }
+    }
+  }
+
+  async function saveButtonClick() {
+    for (let defaultItem of defaults) {
+      let input = document.getElementById(`p${defaultItem.index}`);
+      input.value = Number(input.value);
+    }
+
+    let dto = {
+      id: @Model.CurrentState.Id,
+      utcValidFrom: getDateTime(document.getElementById("dtFrom")),
+      utcValidTo: getDateTime(document.getElementById("dtTo")),
+      items: [...defaults.map(def => {
+        return {
+          plantIndex: def.index,
+          volumeMl: document.getElementById(`p${def.index}`).value
+        }
+      })]
+    };
+
+    if ((dto.utcValidFrom === null) || (dto.utcValidTo === null)) {
+      @if ((string)ViewData["Lang"] == "EN")
+      {
+        <text>alert("Empty date"); </text>
+      }
+      else
+      {
+        <text>alert("Tukšs datums"); </text>
+      }
+    } else {
+      let result = await fetch("/api/task", {
+        method: "POST",
+        body: JSON.stringify(dto),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8"
+        }
+      });
+
+      if (result.ok) {
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>location.href="/en"; </text>
+        }
+        else
+        {
+          <text>location.href="/"; </text>
+        }
+      } else {
+        @if ((string)ViewData["Lang"] == "EN")
+        {
+          <text>alert("Error"); </text>
+        }
+        else
+        {
+          <text>alert("Kļūda"); </text>
+        }
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+  @if (Model.CurrentState.UtcValidFrom.HasValue)
+  {
+    <text>setDateTimeUtc(document.getElementById("dtFrom"), new Date(@(Model.CurrentState.UtcValidFrom.Value.UtcToJsMilliseconds()))); </text>
+  }
+  @if (Model.CurrentState.UtcValidTo.HasValue)
+  {
+    <text>setDateTimeUtc(document.getElementById("dtTo"), new Date(@(Model.CurrentState.UtcValidTo.Value.UtcToJsMilliseconds()))); </text>
+  }
+
+  });
+</script>
+
+@section Styles {
+  
+}
+
+@{
+  Layout = "Layout";
+}

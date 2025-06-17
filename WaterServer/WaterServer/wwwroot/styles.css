@@ -39,6 +39,7 @@ button {
   font-size: 16px;
   text-transform: uppercase;
   padding: var(--step);
+  background: var(--background);
   color: var(--text);
 }
 
@@ -46,6 +47,15 @@ button {
   button {
     font-size: 13px;
   }
+}
+
+button:hover {
+  background: var(--headers);
+  color: var(--background);
+}
+button:active {
+  background: var(--text);
+  color: var(--background);
 }
 
 header {
