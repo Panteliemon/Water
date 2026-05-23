@@ -7,7 +7,7 @@ unsigned long lastBlinkEndMs = 0;
 void debounceBlinks(int minimumInterval) {
   unsigned long msNow = millis();
   unsigned long minimumIntervalEnd = lastBlinkEndMs + (unsigned long)minimumInterval;
-  if (msNow < lastBlinkEndMs + minimumIntervalEnd) {
+  if (msNow < minimumIntervalEnd) {
     delay(minimumIntervalEnd - msNow);
   }
 }
