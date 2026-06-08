@@ -26,8 +26,9 @@ public class Program
         string secretsFolderPath = builder.Configuration[
             builder.Environment.IsDevelopment() ? "App:SecretsPath:Home" : "App:SecretsPath:EC2"
         ];
+        bool isSelfHosted = Convert.ToBoolean(builder.Configuration["App:SelfHosted"]);
 
-        if (!builder.Environment.IsDevelopment())
+        if (isSelfHosted && !builder.Environment.IsDevelopment())
         {
             // Dotnet doesn't load CRT/KEY PEM certificates if they were created
             // through certificate signing request. It only parses self-signed certificates
@@ -64,8 +65,25 @@ public class Program
                 });
             });
         }
+        else
+        {
+            int port = Convert.ToInt32(builder.Configuration["App:HttpPort"]);
+            int httpsPort = Convert.ToInt32(builder.Configuration["App:HttpsDebugPort"]);
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                if (port != 0)
+                    options.Listen(IPAddress.Any, port);
+                if (builder.Environment.IsDevelopment() && isSelfHosted && httpsPort > 0)
+                {
+                    options.Listen(IPAddress.Any, httpsPort, listenOptions =>
+                    {
+                        listenOptions.UseHttps();
+                    });
+                }
+            });
+        }
 
-        AddServices(builder.Services);
+        AddServices(builder.Services, isSelfHosted);
         DataAccessServices.AddServices(builder.Services);
 
         WebApplication app = builder.Build();
@@ -74,8 +92,11 @@ public class Program
         // Create xml line for user / change password - one-time action
         //await CreateUser(app.Services, "User", "111");
 
-        app.UseHsts();
-        app.UseHttpsRedirection();
+        if (isSelfHosted)
+        {
+            app.UseHsts();
+            app.UseHttpsRedirection();
+        }
         app.UseStaticFiles();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -88,13 +109,16 @@ public class Program
         app.Run();
     }
 
-    private static void AddServices(IServiceCollection services)
+    private static void AddServices(IServiceCollection services, bool isSelfHosted)
     {
         services.AddControllersWithViews();
-        services.AddHttpsRedirection(options =>
+        if (isSelfHosted)
         {
-            options.HttpsPort = 443;
-        });
+            services.AddHttpsRedirection(options =>
+            {
+                options.HttpsPort = 443;
+            });
+        }
         services.AddSingleton<IWaterConfig, WaterConfig>();
         services.AddSingleton<ICriticalSection, CriticalSection>();
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>

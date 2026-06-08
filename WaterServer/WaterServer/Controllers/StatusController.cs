@@ -32,6 +32,7 @@ public class StatusController : ControllerBase
     public async Task<List<TaskRowVm>> GetTaskRows(DateTime? todayStart)
     {
         SModel model = await repository.ReadAll();
+        model ??= SModel.Empty();
 
         IEnumerable<STask> filteredTasks = todayStart.HasValue
             ? model.Tasks.Where(t => t.UtcValidTo > todayStart.Value)
@@ -57,6 +58,7 @@ public class StatusController : ControllerBase
     public async Task<List<ClientActivityRowVm>> GetClientActivityRows(DateTime? from)
     {
         SModel model = await repository.ReadAll();
+        model ??= SModel.Empty();
 
         IEnumerable<SClientActivityRec> filtered = from.HasValue
             ? model.ClientActivities.Where(ca => ca.UtcTimeStamp >= from)

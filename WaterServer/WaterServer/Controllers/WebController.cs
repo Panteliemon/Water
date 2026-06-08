@@ -43,6 +43,8 @@ public class WebController : Controller
     private async Task<IndexVm> LoadIndex()
     {
         SModel model = await repository.ReadAll();
+        model ??= SModel.Empty();
+
         int? waterConsumptionMl = model.GetWaterConsumptionMl();
         IndexVm vm = new IndexVm()
         {
@@ -169,6 +171,8 @@ public class WebController : Controller
         };
 
         SModel model = await repository.ReadAll();
+        model ??= SModel.Empty();
+
         STask existingTask = id.HasValue ? model.Tasks.FirstOrDefault(t => t.Id == id.Value) : null;
         if (existingTask != null)
         {
