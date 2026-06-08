@@ -1,7 +1,7 @@
 {
   "WaterServerDomain": {
-    "Debug": "localhost:7213",
-    "Release": "ec2-63-176-210-31.eu-central-1.compute.amazonaws.com"
+    "Debug": "localhost:5111",
+    "Release": "bn-water.lv"
   },
   "SecretsPath": "D:\\Bn\\Src\\Water_Secrets"
 }
