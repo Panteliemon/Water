@@ -11,9 +11,9 @@ public class PlantVm
     {
         switch (PlantType)
         {
-            case SPlantType.Tomato: return "tomato.png";
-            case SPlantType.CayennePepper: return "chili-pepper.png";
-            case SPlantType.Drain: return "waste.png";
+            case SPlantType.Tomato: return "static/tomato.png";
+            case SPlantType.CayennePepper: return "static/chili-pepper.png";
+            case SPlantType.Drain: return "static/waste.png";
             default: return null;
         }
     }

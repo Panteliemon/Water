@@ -3,10 +3,10 @@
 <head>
   <meta name="viewport" content="width=device-width" />
   <title>@ViewData["Title"]</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-latest.js" integrity="sha512-2AL/VEauKkZqQU9BHgnv48OhXcJPx9vdzxN1JrKDVc4FPU/MEE/BZ6d9l0mP7VmvLsjtYwqiYQpDskK9dG8KBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="/scripts.js"></script>
+  <script src="/static/scripts.js"></script>
   @if ((string)ViewData["Lang"] == "EN")
   {
     <script>
@@ -25,8 +25,8 @@
 </head>
 <body>
   <header>
-    <img class="logo-bg" src="~/logo-bg.jpg" />
-    <img class="logo-fg" src="~/logo-fg.png" alt="Bn Waterer 2" title="Bn Waterer 2" />
+    <img class="logo-bg" src="~/static/logo-bg.jpg" />
+    <img class="logo-fg" src="~/static/logo-fg.png" alt="Bn Waterer 2" title="Bn Waterer 2" />
     <div class="motto">
       @if ((string)ViewData["Lang"] == "EN")
       {
